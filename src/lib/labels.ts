@@ -25,7 +25,12 @@ export const ROLE_LABEL: Record<string, string> = {
   ADMIN: "Dueño / Administrador", GERENCIA: "Gerencia / Jefe de ventas", VENDEDOR: "Vendedor", FINANZAS: "Finanzas", FOTOGRAFO: "Fotógrafo",
 };
 export const VEHICLE_STATUS: Record<string, [string, Tone]> = {
-  DISPONIBLE: ["Disponible", "green"], RESERVADO: ["Reservado", "amber"], VENDIDO: ["Vendido", "blue"], RETIRADO: ["Retirado", "gray"],
+  DISPONIBLE: ["Disponible", "green"],
+  RESERVADO: ["Reservado", "amber"],
+  VENDIDO: ["Vendido", "red"],
+  EN_CONSIGNACION: ["En consignación", "violet"],
+  POR_CONFIRMAR: ["Por confirmar", "gray"],
+  RETIRADO: ["Retirado", "gray"],
 };
 export const APPT_TYPE: Record<string, string> = { TEST_DRIVE: "Test drive", REUNION: "Reunión", ENTREGA: "Entrega", SERVICIO: "Servicio" };
 export const APPT_STATUS: Record<string, [string, Tone]> = {

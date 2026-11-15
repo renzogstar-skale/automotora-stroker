@@ -20,11 +20,15 @@ import {
   ChevronRight,
   MessageCircle,
   ArrowLeft,
+  ExternalLink,
+  Tag,
+  AlertTriangle,
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { can } from "@/lib/rbac";
+import { BUSINESS, DEMO_INVENTORY } from "@/lib/business";
 import { clp, km, toLocalInput } from "@/lib/format";
-import { publicSelect, publicWhere, type PublicVehicle } from "@/server/web";
+import { publicSelect, type PublicVehicle } from "@/server/web";
 import { Gallery } from "../../gallery";
 import { PublicForm } from "../../public-form";
 import { Availability, Shell, loadSite, one, trackView, waLink } from "../../site";
@@ -57,7 +61,7 @@ const find = (slug: string) =>
 
 const earliestTestDrive = () => toLocalInput(new Date(Date.now() + 3600e3));
 const isPublic = (v: { published: boolean; status: string } | null) =>
-  !!v && v.published && ["DISPONIBLE", "RESERVADO"].includes(v.status);
+  !!v && v.published && ["DISPONIBLE", "RESERVADO", "VENDIDO", "EN_CONSIGNACION"].includes(v.status);
 
 export async function generateMetadata({
   params,
@@ -65,12 +69,12 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }) {
   const v = await find((await params).slug);
-  return v && isPublic(v)
-    ? {
-        title: `${v.brand} ${v.model} ${v.year}`,
-        description: `${v.version} · ${km(v.km)} · ${clp(v.price)} · Automotora Stroker Chile`,
-      }
-    : { title: "Vehículo no disponible", robots: { index: false } };
+  if (!v || !isPublic(v)) return { title: "Vehículo no disponible", robots: { index: false } };
+  const prefix = v.status === "VENDIDO" ? "[VENDIDO] " : v.status === "RESERVADO" ? "[RESERVADO] " : "";
+  return {
+    title: `${prefix}${v.brand} ${v.model} ${v.year} · Automotora Stroker`,
+    description: `${v.version} · ${km(v.km)} · ${clp(v.price)} · Automotora Stroker Antofagasta`,
+  };
 }
 
 export default async function VehiclePage({
@@ -96,27 +100,23 @@ export default async function VehiclePage({
   if (pub && !ctx.preview && !internal) await trackView("VEHICLE_VIEW", `/autos/${slug}`, v.id);
 
   const name = `${v.brand} ${v.model} ${v.year}`;
-  const reserved = v.status === "RESERVADO";
+  const isVendido = v.status === "VENDIDO";
+  const isReservado = v.status === "RESERVADO";
   const minDate = earliestTestDrive();
 
-  // 4. Extracción de información técnica verificada (sin inventar datos)
-  // Extracción del motor si se detecta en la versión o descripción (ej. 2.0, 3.2, 2.4, etc.)
+  // 4. Extracción de información técnica verificada
   const engineMatch =
     v.version.match(/\b([0-9]\.[0-9])\s*(?:L|cc)?\b/i) ||
     v.description?.match(/\b([0-9]\.[0-9])\s*(?:L|cc|litros)?\b/i);
   const detectedEngine = engineMatch ? `${engineMatch[1]} Litros` : null;
 
-  // Extracción de tracción si se detecta en la versión o descripción (ej. 4x4, AWD, 4x2)
   const tractionMatch =
     v.version.match(/\b(4x4|4WD|AWD|4x2|FWD|RWD|Integral|Delantera|Trasera)\b/i) ||
     v.description?.match(/\b(4x4|4WD|AWD|4x2|Delantera|Trasera)\b/i);
   const detectedTraction = tractionMatch ? tractionMatch[1].toUpperCase() : null;
 
-  // Extracción de equipamiento destacado si la descripción lo documenta
-  const hasFullEquip = /full equipo/i.test(v.description || "");
-  const hasCamera = /c[aá]mara/i.test(v.description || "");
-  const hasSunroof = /sunroof|techo/i.test(v.description || "");
-  const hasLeather = /cuero/i.test(v.description || "");
+  // Equipamiento documentado
+  const featuresList: string[] = Array.isArray(v.features) ? (v.features as string[]) : [];
 
   // Lista de especificaciones técnicas comprobadas
   const technicalSpecs: { label: string; value: string; icon?: typeof Gauge }[] = [
@@ -128,21 +128,23 @@ export default async function VehiclePage({
     ...(detectedTraction ? [{ label: "Tracción", value: detectedTraction }] : []),
     { label: "Carrocería", value: v.bodyType },
     { label: "Color exterior", value: v.color },
-    { label: "Condición", value: v.condition === "NUEVO" ? "Nuevo" : "Seminuevo Garantizado" },
-    { label: "Sucursal", value: `${v.branch.name} (${v.branch.comuna})` },
+    { label: "Condición", value: v.condition === "NUEVO" ? "Nuevo" : "Seminuevo seleccionado" },
+    { label: "Código de stock", value: v.stockCode || "STK-OFICIAL" },
+    { label: "Ubicación", value: BUSINESS.showroom },
   ];
 
-  // 6. Información de revisión e historial documentado
-  const hasMaintenance = /mantencion(es)?/i.test(v.description || "");
-  const isSingleOwner = /[uú]nica due[ñn]a|[uú]nico due[ñn]o/i.test(v.description || "");
-  const hasDocsUpToDate = /al d[ií]a|permiso|revisi[oó]n t[eé]cnica/i.test(v.description || "");
+  // Historial documentado
+  const hasMaintenance = /mantencion(es)?/i.test(v.description || "") || /mantenciones/i.test(v.originalCaption || "");
+  const isSingleOwner = /[uú]nica due[ñn]a|[uú]nico due[ñn]o/i.test(v.description || "") || /dueñ/i.test(v.originalCaption || "");
+  const hasDocsUpToDate = /al d[ií]a|permiso|revisi[oó]n/i.test(v.description || "") || /al d[ií]a/i.test(v.originalCaption || "");
 
-  // 10. Consulta de vehículos similares basada en inventario real
+  // Consulta de vehículos similares basada en inventario disponible real
   let similarVehicles: PublicVehicle[] = [];
   try {
     similarVehicles = await db.vehicle.findMany({
       where: {
-        ...publicWhere,
+        published: true,
+        status: "DISPONIBLE",
         id: { not: v.id },
         OR: [
           { bodyType: v.bodyType },
@@ -152,7 +154,7 @@ export default async function VehiclePage({
       },
       select: publicSelect,
       take: 3,
-      orderBy: [{ featured: "desc" }, { publishedAt: "desc" }],
+      orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
     });
   } catch (err) {
     console.error("Error al cargar similares:", err);
@@ -168,10 +170,19 @@ export default async function VehiclePage({
         </div>
       )}
 
+      {/* Banner de vehículo vendido */}
+      {isVendido && (
+        <div className="bg-red-600/15 border-b border-red-500/30 px-4 py-3 text-center">
+          <div className="mx-auto max-w-7xl flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm font-bold text-red-600 dark:text-red-400">
+            <span>🔴 Esta unidad fue VENDIDA por Automotora Stroker.</span>
+            <span className="font-normal text-ink/80">Puedes revisar las opciones disponibles a continuación o consultarnos por WhatsApp.</span>
+          </div>
+        </div>
+      )}
+
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 pb-24 sm:pb-16">
-        {/* Barra superior: Breadcrumb y Botón Volver al Catálogo conservando filtros */}
+        {/* Barra superior: Breadcrumb y Volver */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
-          {/* Breadcrumb de navegación accesible con microformatos */}
           <nav aria-label="Ruta de navegación" className="flex items-center gap-1.5 text-xs sm:text-sm text-muted">
             <ol className="flex items-center gap-1.5 flex-wrap">
               <li className="flex items-center gap-1.5">
@@ -201,23 +212,38 @@ export default async function VehiclePage({
             </ol>
           </nav>
 
-          {/* Botón para volver al catálogo conservando filtros */}
           <Link
             href={ctx.href(`/?marca=${encodeURIComponent(v.brand)}#vitrina`)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface hover:bg-surface-2 px-3 py-1.5 text-xs font-semibold text-ink hover:text-accent transition-all shadow-sm active:scale-[0.98]"
+            className="inline-flex items-center gap-1.5 rounded-xl border border-line bg-surface hover:bg-surface-2 px-3.5 min-h-11 text-xs font-semibold text-ink hover:text-accent transition-all shadow-sm active:scale-[0.98]"
           >
             <ArrowLeft className="size-3.5" />
             <span>Volver al catálogo</span>
           </Link>
         </div>
 
-        {/* Encabezado Principal del Vehículo */}
+        {/* Encabezado Principal */}
         <div className="mb-6">
           <div className="flex flex-wrap items-center gap-2 mb-2">
             <Availability status={v.status} />
+            {v.stockCode && (
+              <span className="rounded-lg bg-surface-2 border border-line px-2.5 py-0.5 text-xs font-mono font-bold text-muted">
+                {v.stockCode}
+              </span>
+            )}
             <span className="rounded-lg bg-surface-2 border border-line px-2.5 py-0.5 text-xs font-semibold text-muted">
-              {v.branch.name} · {v.branch.comuna}
+              {BUSINESS.showroom}
             </span>
+            {v.instagramUrl && (
+              <a
+                href={v.instagramUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-lg bg-pink-500/10 border border-pink-500/20 px-2.5 py-0.5 text-xs font-semibold text-pink-600 dark:text-pink-400 hover:bg-pink-500/20 transition-colors"
+              >
+                <span>Instagram Oficial</span>
+                <ExternalLink className="size-3" />
+              </a>
+            )}
           </div>
 
           <div className="flex flex-wrap items-start justify-between gap-4">
@@ -241,48 +267,42 @@ export default async function VehiclePage({
           </div>
         </div>
 
-        {/* Layout Principal: Galería y Contenido a la Izquierda (col-span-3) + Panel Sticky a la Derecha (col-span-2) */}
+        {/* Layout Principal: Galería y Contenido (3 cols) + Sticky Panel (2 cols) */}
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-start">
-          {/* Columna Izquierda: Galería y Ficha Técnica Detallada */}
           <div className="lg:col-span-3 space-y-8">
-            {/* 1. Galería de fotografías con imagen principal y miniaturas */}
-            <Gallery photos={v.photos.map((p) => p.url)} alt={name} />
+            {/* Galería de Fotografías Reales */}
+            <div className="relative">
+              <Gallery photos={v.photos.map((p) => p.url)} alt={name} />
+              {isVendido && (
+                <div className="absolute top-4 right-4 z-20">
+                  <span className="rounded-xl bg-red-600 text-white font-black px-4 py-2 text-sm shadow-xl tracking-wider uppercase">
+                    🔴 VENDIDO
+                  </span>
+                </div>
+              )}
+            </div>
 
             {/* Cuadrícula de destacados rápidos */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="card p-3.5 rounded-xl border border-line bg-surface text-center">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted">
-                  Año
-                </span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted">Año</span>
                 <span className="text-lg font-black text-ink mt-0.5 block">{v.year}</span>
               </div>
               <div className="card p-3.5 rounded-xl border border-line bg-surface text-center">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted">
-                  Kilómetros
-                </span>
-                <span className="text-lg font-black text-ink mt-0.5 block truncate">
-                  {km(v.km)}
-                </span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted">Kilómetros</span>
+                <span className="text-lg font-black text-ink mt-0.5 block truncate">{km(v.km)}</span>
               </div>
               <div className="card p-3.5 rounded-xl border border-line bg-surface text-center">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted">
-                  Transmisión
-                </span>
-                <span className="text-lg font-black text-ink mt-0.5 block truncate">
-                  {v.transmission}
-                </span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted">Transmisión</span>
+                <span className="text-lg font-black text-ink mt-0.5 block truncate">{v.transmission}</span>
               </div>
               <div className="card p-3.5 rounded-xl border border-line bg-surface text-center">
-                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted">
-                  Combustible
-                </span>
-                <span className="text-lg font-black text-ink mt-0.5 block truncate">
-                  {v.fuel}
-                </span>
+                <span className="block text-[11px] font-bold uppercase tracking-wider text-muted">Combustible</span>
+                <span className="text-lg font-black text-ink mt-0.5 block truncate">{v.fuel}</span>
               </div>
             </div>
 
-            {/* 5. Descripción Comercial */}
+            {/* Descripción Comercial */}
             {v.description && (
               <div className="card p-6 sm:p-7 rounded-2xl border border-line bg-surface shadow-sm">
                 <div className="flex items-center gap-2 mb-3">
@@ -292,10 +312,18 @@ export default async function VehiclePage({
                 <p className="whitespace-pre-line text-sm sm:text-base text-muted leading-relaxed">
                   {v.description}
                 </p>
+                {v.originalCaption && v.originalCaption !== v.description && (
+                  <details className="mt-4 border-t border-line pt-3 text-xs text-muted">
+                    <summary className="cursor-pointer font-semibold hover:text-ink">Ver caption original completo de Instagram</summary>
+                    <p className="mt-2 whitespace-pre-line bg-surface-2 p-3 rounded-lg font-mono text-[11px]">
+                      {v.originalCaption}
+                    </p>
+                  </details>
+                )}
               </div>
             )}
 
-            {/* 4. Información técnica estructurada (Solo datos reales existentes) */}
+            {/* Ficha Técnica y Equipamiento */}
             <div className="card p-6 sm:p-7 rounded-2xl border border-line bg-surface shadow-sm">
               <div className="flex items-center justify-between mb-5 border-b border-line pb-3">
                 <h2 className="text-lg font-bold text-ink flex items-center gap-2">
@@ -303,16 +331,13 @@ export default async function VehiclePage({
                   <span>Ficha Técnica y Equipamiento</span>
                 </h2>
                 <span className="text-[11px] font-semibold text-muted">
-                  Datos oficiales del vehículo
+                  Datos oficiales Stroker
                 </span>
               </div>
 
               <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3.5 text-sm">
                 {technicalSpecs.map((spec) => (
-                  <div
-                    key={spec.label}
-                    className="flex items-center justify-between py-1.5 border-b border-line/60"
-                  >
+                  <div key={spec.label} className="flex items-center justify-between py-1.5 border-b border-line/60">
                     <dt className="text-muted flex items-center gap-1.5">
                       {spec.icon && <spec.icon className="size-3.5 text-accent" />}
                       <span>{spec.label}:</span>
@@ -322,77 +347,51 @@ export default async function VehiclePage({
                 ))}
               </dl>
 
-              {/* Equipamiento documentado */}
-              {(hasFullEquip || hasCamera || hasSunroof || hasLeather) && (
+              {/* Equipamiento y extras destacados */}
+              {featuresList.length > 0 && (
                 <div className="mt-6 pt-4 border-t border-line">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted block mb-2.5">
-                    Equipamiento Documentado
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted block mb-3">
+                    Equipamiento y Extras Incluidos
                   </span>
-                  <div className="flex flex-wrap gap-2">
-                    {hasFullEquip && (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-surface-2 border border-line px-2.5 py-1 text-xs font-semibold text-ink">
-                        <CheckCircle2 className="size-3 text-emerald-600" /> Full Equipo
-                      </span>
-                    )}
-                    {hasCamera && (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-surface-2 border border-line px-2.5 py-1 text-xs font-semibold text-ink">
-                        <CheckCircle2 className="size-3 text-emerald-600" /> Cámara de Retroceso
-                      </span>
-                    )}
-                    {hasSunroof && (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-surface-2 border border-line px-2.5 py-1 text-xs font-semibold text-ink">
-                        <CheckCircle2 className="size-3 text-emerald-600" /> Sunroof / Techo
-                      </span>
-                    )}
-                    {hasLeather && (
-                      <span className="inline-flex items-center gap-1 rounded-lg bg-surface-2 border border-line px-2.5 py-1 text-xs font-semibold text-ink">
-                        <CheckCircle2 className="size-3 text-emerald-600" /> Asientos de Cuero
-                      </span>
-                    )}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {featuresList.map((feature, i) => (
+                      <div key={i} className="flex items-center gap-2 text-xs font-semibold text-ink bg-surface-2/60 border border-line/60 rounded-lg p-2">
+                        <CheckCircle2 className="size-3.5 text-emerald-600 shrink-0" />
+                        <span>{feature}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* 6. Información de revisión e historial cuando esté documentada */}
+            {/* Historial y documentación */}
             <div className="card p-6 sm:p-7 rounded-2xl border border-line bg-surface shadow-sm">
               <div className="flex items-center gap-2 mb-4">
                 <FileCheck2 className="size-5 text-accent" />
-                <h2 className="text-lg font-bold text-ink">
-                  Historial e Inspección de Seguridad
-                </h2>
+                <h2 className="text-lg font-bold text-ink">Historial y Documentación</h2>
               </div>
 
               <div className="space-y-3 text-sm">
-                <div className="flex items-start gap-3 rounded-xl bg-surface-2/60 p-3.5 border border-line/60">
-                  <BadgeCheck className="size-5 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-ink">Inspección de 120 Puntos Stroker</h3>
-                    <p className="text-xs text-muted mt-0.5">
-                      Diagnóstico integral mecánico, eléctrico, frenos, escáner computarizado y tren delantero aprobado.
-                    </p>
+                {hasDocsUpToDate && (
+                  <div className="flex items-start gap-3 rounded-xl bg-surface-2/60 p-3.5 border border-line/60">
+                    <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <div>
+                      <h3 className="font-bold text-ink">Documentación al día</h3>
+                      <p className="text-xs text-muted mt-0.5">
+                        Permiso de circulación, revisión técnica y SOAP vigentes comprobados.
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="flex items-start gap-3 rounded-xl bg-surface-2/60 p-3.5 border border-line/60">
-                  <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
-                  <div>
-                    <h3 className="font-bold text-ink">Documentación y Dominio al Día</h3>
-                    <p className="text-xs text-muted mt-0.5">
-                      {hasDocsUpToDate
-                        ? "Revisión técnica y permiso de circulación vigentes. Sin multas de tránsito ni prendas registradas."
-                        : "Historial de dominio verificado en Registro Civil. Aprobado para transferencia inmediata."}
-                    </p>
-                  </div>
-                </div>
+                )}
 
                 {hasMaintenance && (
                   <div className="flex items-start gap-3 rounded-xl bg-surface-2/60 p-3.5 border border-line/60">
                     <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-bold text-ink">Mantenimientos al Día</h3>
+                      <h3 className="font-bold text-ink">Mantenciones al día</h3>
                       <p className="text-xs text-muted mt-0.5">
-                        Pauta de mantenciones preventivas y cuidados mecánicos debidamente documentados.
+                        Historial de mantenciones periódicas y servicio técnico registrado.
                       </p>
                     </div>
                   </div>
@@ -402,75 +401,81 @@ export default async function VehiclePage({
                   <div className="flex items-start gap-3 rounded-xl bg-surface-2/60 p-3.5 border border-line/60">
                     <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
                     <div>
-                      <h3 className="font-bold text-ink">Procedencia Destacada</h3>
+                      <h3 className="font-bold text-ink">Único dueño informado</h3>
                       <p className="text-xs text-muted mt-0.5">
-                        Unidad de único dueño, con historial comprobable y cuidado riguroso.
+                        Verificable en el Certificado de Anotaciones Vigentes (CAV).
                       </p>
                     </div>
                   </div>
                 )}
+
+                <a
+                  href={currentWaLink}
+                  className="flex items-start gap-3 rounded-xl border border-dashed border-line p-3.5 hover:border-accent transition-colors"
+                >
+                  <BadgeCheck className="size-5 text-accent shrink-0 mt-0.5" />
+                  <div>
+                    <h3 className="font-bold text-ink">Solicitar Certificado de Anotaciones Vigentes (CAV)</h3>
+                    <p className="text-xs text-muted mt-0.5">
+                      Te enviamos el CAV e informe de multas por WhatsApp para total tranquilidad.
+                    </p>
+                  </div>
+                </a>
               </div>
             </div>
 
-            {/* 7. Sucursal donde se encuentra */}
+            {/* Dónde verla */}
             <div className="card p-6 sm:p-7 rounded-2xl border border-line bg-surface shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Building2 className="size-5 text-accent" />
-                  <h2 className="text-lg font-bold text-ink">Ubicación y Sucursal</h2>
-                </div>
-                <span className="rounded-lg bg-accent/10 px-2.5 py-0.5 text-xs font-bold text-accent">
-                  Exhibición Física
-                </span>
+              <div className="flex items-center gap-2 mb-4">
+                <Building2 className="size-5 text-accent" />
+                <h2 className="text-lg font-bold text-ink">Showroom y Ubicación</h2>
               </div>
 
               <div className="space-y-3 text-sm text-muted">
                 <div className="flex items-start gap-3">
                   <MapPin className="size-4 shrink-0 text-accent mt-0.5" />
                   <div>
-                    <p className="font-bold text-ink">{v.branch.name}</p>
-                    <p className="text-muted">
-                      {v.branch.address || "Providencia"}, {v.branch.comuna}, Región {v.branch.region || "Metropolitana"}
-                    </p>
+                    <p className="font-bold text-ink">{BUSINESS.showroom}</p>
+                    <a href={BUSINESS.mapsUrl} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-accent hover:underline">
+                      {BUSINESS.address}
+                    </a>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
                   <Clock className="size-4 shrink-0 text-accent" />
-                  <span>Lun–Vie 09:30–19:00 · Sáb 10:00–14:00 (America/Santiago)</span>
+                  <span>{BUSINESS.hours} · coordina tu visita antes de ir</span>
                 </div>
 
-                {v.branch.phone && (
-                  <div className="flex items-center gap-3">
-                    <Phone className="size-4 shrink-0 text-accent" />
-                    <span>
-                      Fono directo: <strong className="text-ink">{v.branch.phone}</strong>
-                    </span>
-                  </div>
-                )}
+                <div className="flex items-center gap-3">
+                  <Phone className="size-4 shrink-0 text-accent" />
+                  <a href={BUSINESS.tel} className="font-semibold text-ink hover:text-accent">{BUSINESS.phone}</a>
+                </div>
               </div>
             </div>
 
-            {/* 9. Calculadora referencial de financiamiento */}
-            <FinanceCalculator price={v.price} vehicleName={name} />
+            {/* Calculadora de financiamiento (solo para disponibles o reservados) */}
+            {!isVendido && <FinanceCalculator price={v.price} vehicleName={name} />}
 
-            {/* Formularios de contacto y test drive con id anclados para fácil navegación */}
+            {/* Formularios de contacto */}
             <div id="consulta-form" className="space-y-6 pt-4">
               <div className="card p-6 sm:p-7 rounded-2xl border border-line bg-surface shadow-sm">
                 <div className="flex items-center gap-2 mb-4">
                   <MessageCircle className="size-5 text-accent" />
                   <h2 className="text-lg font-bold text-ink">
-                    Consultar por este vehículo
+                    {isVendido ? "Consultar por vehículos similares o próximos ingresos" : "Consultar por este vehículo"}
                   </h2>
                 </div>
                 <p className="text-xs text-muted mb-5">
-                  Déjanos tus datos y un ejecutivo comercial de la sucursal {v.branch.comuna} se comunicará a la brevedad.
+                  {isVendido
+                    ? "Esta unidad ya se vendió. Déjanos tus datos y te avisaremos si ingresa un modelo similar o te buscamos uno a pedido."
+                    : "Déjanos tus datos y un ejecutivo comercial de Automotora Stroker te contactará a la brevedad."}
                 </p>
                 <PublicForm
                   kind="CONSULTA"
                   token={randomUUID()}
                   hidden={{ vehicleId: v.id }}
-                  submit="Enviar consulta"
+                  submit={isVendido ? "Enviar consulta de similares" : "Enviar consulta"}
                   fields={[
                     { name: "name", label: "Nombre completo", required: true },
                     {
@@ -500,7 +505,7 @@ export default async function VehiclePage({
                 />
               </div>
 
-              {!reserved && (
+              {!isReservado && !isVendido && (
                 <div
                   id="agenda-visita-section"
                   className="card p-6 sm:p-7 rounded-2xl border border-line bg-surface shadow-sm"
@@ -512,7 +517,7 @@ export default async function VehiclePage({
                     </h2>
                   </div>
                   <p className="text-xs text-muted mb-5">
-                    Elige el día y la hora para probar esta unidad en la sucursal {v.branch.name}.
+                    Elige el día y la hora para probar esta unidad en {BUSINESS.showroom}. Te confirmaremos el horario.
                   </p>
                   <PublicForm
                     kind="TEST_DRIVE"
@@ -543,7 +548,7 @@ export default async function VehiclePage({
             </div>
           </div>
 
-          {/* Columna Derecha: 11. Panel Sticky de Precio y Acciones Comerciales en Escritorio */}
+          {/* Columna Derecha: Sticky Panel */}
           <div className="hidden lg:block lg:col-span-2">
             <VehicleStickyPanel
               vehicleId={v.id}
@@ -554,19 +559,23 @@ export default async function VehiclePage({
               status={v.status}
               waLink={currentWaLink}
               branch={v.branch}
+              stockCode={v.stockCode}
+              instagramUrl={v.instagramUrl}
+              minDownPayment={v.minDownPayment}
             />
           </div>
         </div>
 
-        {/* 10. Sección de vehículos similares basada en el inventario real */}
+        {/* Sección de vehículos similares disponibles */}
         <SimilarVehicles vehicles={similarVehicles} href={ctx.href} />
       </div>
 
-      {/* 12. Botón y barra inferior fija de contacto en móvil */}
+      {/* Barra móvil */}
       <VehicleMobileBar
         price={v.price}
         waLink={currentWaLink}
-        isReservado={reserved}
+        isReservado={isReservado}
+        isVendido={isVendido}
       />
     </Shell>
   );

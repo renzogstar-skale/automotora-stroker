@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Menu, X, ShieldAlert, Sparkles, Phone, MapPin, Gauge } from "lucide-react";
+import { ArrowRight, Menu, X, Sparkles, Phone, MapPin, Gauge } from "lucide-react";
+import { BUSINESS, DEMO_INVENTORY, waUrl } from "@/lib/business";
 
 interface DemoNavbarProps {
   actor: { name: string; email: string } | null;
@@ -28,14 +29,20 @@ export function DemoNavbar({ actor }: DemoNavbarProps) {
       <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-b border-white/5 py-1 px-4 text-center">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between text-[11px] sm:text-xs text-zinc-400">
           <div className="flex items-center gap-2">
-            <span className="inline-block size-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="font-semibold text-zinc-300">
-              Entorno Demo <span className="hidden sm:inline">· Datos de demostración</span>
-            </span>
+            {DEMO_INVENTORY ? (
+              <>
+                <span className="inline-block size-2 rounded-full bg-amber-400" />
+                <span className="font-semibold text-zinc-300">
+                  Inventario de demostración <span className="hidden sm:inline">· unidades y precios referenciales</span>
+                </span>
+              </>
+            ) : (
+              <span className="font-semibold text-zinc-300">{BUSINESS.hours}</span>
+            )}
           </div>
           <div className="hidden md:flex items-center gap-4 text-zinc-400">
             <a
-              href="https://www.google.com/search?kgmid=%2Fg%2F11zd3t8786"
+              href={BUSINESS.mapsUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 hover:text-white transition-colors"
@@ -43,19 +50,11 @@ export function DemoNavbar({ actor }: DemoNavbarProps) {
               <MapPin className="size-3 text-red-500" /> Av. Jaime Guzmán 4050, Antofagasta
             </a>
             <span className="text-zinc-600">|</span>
-            <a
-              href="tel:+56971325262"
-              className="flex items-center gap-1.5 hover:text-white transition-colors"
-            >
-              <Phone className="size-3 text-red-500" /> +56 9 7132 5262
-            </a>
-            <span className="text-zinc-600">|</span>
             <span className="text-zinc-400">Despachos a todo Chile</span>
           </div>
-          <div className="flex items-center gap-1.5 text-zinc-400">
-            <ShieldAlert className="size-3 text-amber-400" />
-            <span className="text-[10px] sm:text-[11px]">Simulación visual y técnica</span>
-          </div>
+          <a href={BUSINESS.tel} className="flex items-center gap-1.5 text-zinc-300 hover:text-white transition-colors">
+            <Phone className="size-3 text-red-500" /> {BUSINESS.phone}
+          </a>
         </div>
       </div>
 
@@ -80,9 +79,6 @@ export function DemoNavbar({ actor }: DemoNavbarProps) {
               <div className="flex items-center gap-2">
                 <span className="text-lg sm:text-xl font-black tracking-tight text-white group-hover:text-red-400 transition-colors">
                   STROKER
-                </span>
-                <span className="rounded bg-red-600/20 border border-red-500/30 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-red-400">
-                  DEMO
                 </span>
               </div>
               <span className="text-[10px] font-medium tracking-widest uppercase text-zinc-400">
@@ -201,14 +197,14 @@ export function DemoNavbar({ actor }: DemoNavbarProps) {
               </a>
               <div className="my-2 border-t border-white/10 pt-2 grid grid-cols-2 gap-2 text-xs">
                 <a
-                  href="tel:+56971325262"
+                  href={BUSINESS.tel}
                   className="flex items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 py-2.5 font-medium text-white hover:bg-white/10 transition-colors"
                 >
                   <Phone className="size-3.5 text-red-400" />
                   <span>Llamar</span>
                 </a>
                 <a
-                  href="https://wa.me/56971325262"
+                  href={waUrl("Hola, quiero más información.")}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-600/20 py-2.5 font-semibold text-emerald-300 hover:bg-emerald-600/30 transition-colors"

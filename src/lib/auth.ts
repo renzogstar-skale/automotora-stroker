@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
+import { audit } from "./audit";
 import { sha256, randomToken } from "./crypto";
 import { can, type Actor, type Perm } from "./rbac";
 
@@ -23,9 +24,19 @@ export async function destroySession() {
   jar.delete(COOKIE);
 }
 
+const MAX_FAILS = 5;
+const FAIL_WINDOW_MS = 15 * 60_000;
+
+/** Frena fuerza bruta por cuenta: 5 fallos en 15 min bloquean nuevos intentos (registrados en la auditoría). */
 export async function login(email: string, password: string) {
-  const user = await db.user.findUnique({ where: { email: email.trim().toLowerCase() } });
-  if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) return "Correo o contraseña incorrectos.";
+  const key = email.trim().toLowerCase();
+  const fails = await db.auditLog.count({ where: { entity: "Login", entityId: key, action: "LOGIN_FAIL", createdAt: { gte: new Date(Date.now() - FAIL_WINDOW_MS) } } });
+  if (fails >= MAX_FAILS) return "Demasiados intentos fallidos. Espera 15 minutos o recupera tu contraseña.";
+  const user = await db.user.findUnique({ where: { email: key } });
+  if (!user?.passwordHash || !(await bcrypt.compare(password, user.passwordHash))) {
+    await audit(null, "LOGIN_FAIL", "Login", key, "Intento de acceso fallido");
+    return "Correo o contraseña incorrectos.";
+  }
   if (!user.active) return "Tu cuenta está desactivada. Contacta a un administrador.";
   await createSession(user.id);
   return null;

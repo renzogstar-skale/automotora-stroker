@@ -47,7 +47,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<Rec
 
       <section className="border-y border-line bg-surface">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 sm:grid-cols-3 sm:px-6">
-          {[[ShieldCheck, "Revisados y con papeles al día", "Revisión mecánica y documental antes de publicar."], [CalendarCheck, "Test drive agendado", "Elige la unidad y el horario desde su ficha."], [HandCoins, "Consigna tu auto", "Lo publicamos y vendemos por ti."]].map(([I, t, d]) => {
+          {[[ShieldCheck, "Documentación a la vista", "Pide el CAV y los papeles de la unidad antes de reservar."], [CalendarCheck, "Test drive agendado", "Elige la unidad y el horario desde su ficha."], [HandCoins, "Consigna tu auto", "Lo publicamos y vendemos por ti."]].map(([I, t, d]) => {
             const Icon = I as typeof ShieldCheck;
             return <div key={t as string} className="flex gap-3"><Icon className="size-6 shrink-0 text-accent" /><div><p className="font-semibold">{t as string}</p><p className="text-sm text-muted">{d as string}</p></div></div>;
           })}

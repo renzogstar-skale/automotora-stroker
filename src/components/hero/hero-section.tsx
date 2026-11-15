@@ -17,6 +17,7 @@ import {
   MessageCircle,
 } from "lucide-react";
 import { clp } from "@/lib/format";
+import { BUSINESS, DEMO_INVENTORY, waUrl } from "@/lib/business";
 import type { DemoVehicle, DemoBranch, HeroFilterState } from "@/types/hero-demo";
 
 interface HeroSectionProps {
@@ -37,7 +38,6 @@ export function HeroSection({
   title,
   subtitle,
   vehicles,
-  branches,
   filters,
   onFilterChange,
   onSearchSubmit,
@@ -45,31 +45,40 @@ export function HeroSection({
   onOpenAppointmentModal,
   featuredVehicle,
 }: HeroSectionProps) {
-  // Extraer listas únicas de marcas y años del inventario DEMO existente
+  // Extraer listas únicas de marcas y años del inventario real
   const availableBrands = Array.from(new Set(vehicles.map((v) => v.brand))).sort();
   const availableYears = Array.from(new Set(vehicles.map((v) => v.year))).sort((a, b) => b - a);
+
+  // Contadores del Hero con datos reales confirmados (Fase 9)
+  const disponiblesCount = vehicles.filter((v) => v.status === "DISPONIBLE" && v.verificationStatus !== "POR_CONFIRMAR").length;
+  const vendidosCount = vehicles.filter((v) => v.status === "VENDIDO").length;
+  const marcasDisponiblesCount = new Set(
+    vehicles
+      .filter((v) => v.status === "DISPONIBLE" && v.verificationStatus !== "POR_CONFIRMAR")
+      .map((v) => v.brand)
+  ).size;
 
   // Rangos de precios estándar chilenos en CLP
   const priceMinOptions = [
     { label: "Precio mínimo", value: "" },
+    { label: "$4.000.000", value: "4000000" },
     { label: "$6.000.000", value: "6000000" },
-    { label: "$8.000.000", value: "8000000" },
     { label: "$10.000.000", value: "10000000" },
-    { label: "$12.000.000", value: "12000000" },
     { label: "$15.000.000", value: "15000000" },
-    { label: "$18.000.000", value: "18000000" },
     { label: "$20.000.000", value: "20000000" },
+    { label: "$30.000.000", value: "30000000" },
+    { label: "$50.000.000", value: "50000000" },
   ];
 
   const priceMaxOptions = [
     { label: "Precio máximo", value: "" },
     { label: "Hasta $8.000.000", value: "8000000" },
-    { label: "Hasta $10.000.000", value: "10000000" },
     { label: "Hasta $12.000.000", value: "12000000" },
     { label: "Hasta $15.000.000", value: "15000000" },
-    { label: "Hasta $18.000.000", value: "18000000" },
-    { label: "Hasta $20.000.000", value: "20000000" },
-    { label: "Hasta $26.000.000", value: "26000000" },
+    { label: "Hasta $25.000.000", value: "25000000" },
+    { label: "Hasta $35.000.000", value: "35000000" },
+    { label: "Hasta $50.000.000", value: "50000000" },
+    { label: "Hasta $120.000.000", value: "120000000" },
   ];
 
   // Cálculo en tiempo real de vehículos coincidentes
@@ -103,7 +112,12 @@ export function HeroSection({
     }
   };
 
-  const heroVehicle = featuredVehicle || vehicles[0];
+  // Mostrar únicamente unidades disponibles y verificadas como protagonista
+  const heroVehicle =
+    (featuredVehicle && featuredVehicle.status === "DISPONIBLE" ? featuredVehicle : null) ||
+    vehicles.find((v) => v.featured && v.status === "DISPONIBLE" && v.verificationStatus !== "POR_CONFIRMAR") ||
+    vehicles.find((v) => v.status === "DISPONIBLE" && v.verificationStatus !== "POR_CONFIRMAR") ||
+    vehicles[0];
 
   return (
     <section className="relative overflow-hidden bg-zinc-950 text-white min-h-[660px] lg:min-h-[720px] flex flex-col justify-between">
@@ -112,8 +126,10 @@ export function HeroSection({
         {/* Imagen de fondo del héroe */}
         <img
           src="/demo/hero.jpg"
-          alt="Automotora Stroker Vehículo Protagonista"
-          className="size-full object-cover object-center lg:object-[center_35%] scale-105 animate-in fade-in duration-700 opacity-40 brightness-75 contrast-125"
+          alt=""
+          fetchPriority="high"
+          decoding="async"
+          className="size-full object-cover object-center lg:object-[center_35%] scale-105 opacity-40 brightness-75 contrast-125"
         />
 
         {/* Gradientes cinematográficos multicapa para máxima legibilidad */}
@@ -130,16 +146,27 @@ export function HeroSection({
 
       {/* Contenido principal del HERO */}
       <div className="relative mx-auto max-w-[1280px] w-full px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-12 flex-1 flex flex-col justify-center">
-        {/* Badge superior de identidad y propuesta */}
-        <div className="flex flex-wrap items-center gap-3 mb-5">
+        {/* Badges superiores con indicadores reales confirmados de inventario */}
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 mb-5">
           <div className="inline-flex items-center gap-2 rounded-xl border border-red-500/30 bg-red-600/15 px-3.5 py-1.5 text-xs font-semibold text-white backdrop-blur-md shadow-sm">
             <Sparkles className="size-3.5 text-red-400" />
-            <span>Autos, camionetas y motocicletas en Antofagasta · Despacho a todo Chile</span>
+            <span>Showroom Antofagasta · Despachos a todo Chile</span>
           </div>
 
-          <div className="hidden sm:inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-300 backdrop-blur-md">
-            <span className="size-1.5 rounded-full bg-emerald-400" />
-            <span>{vehicles.length} Unidades verificadas en DEMO</span>
+          <div className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/30 bg-emerald-950/40 px-3 py-1.5 text-xs font-bold text-emerald-300 backdrop-blur-md shadow-sm">
+            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>{disponiblesCount} disponibles</span>
+          </div>
+
+          {vendidosCount > 0 && (
+            <div className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-950/40 px-3 py-1.5 text-xs font-bold text-rose-300 backdrop-blur-md">
+              <span className="size-2 rounded-full bg-rose-400" />
+              <span>{vendidosCount} vendido{vendidosCount > 1 ? "s" : ""}</span>
+            </div>
+          )}
+
+          <div className="inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs font-medium text-zinc-300 backdrop-blur-md">
+            <span>{marcasDisponiblesCount} marcas disponibles</span>
           </div>
         </div>
 
@@ -174,7 +201,7 @@ export function HeroSection({
 
               {/* Botón 2: Consultar por WhatsApp */}
               <a
-                href="https://wa.me/56971325262"
+                href={waUrl("Hola, quiero más información sobre el catálogo.")}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2.5 rounded-xl border border-emerald-500/40 bg-emerald-600/25 hover:bg-emerald-600/35 px-6 sm:px-7 h-12 text-sm sm:text-base font-semibold text-white backdrop-blur-md shadow-lg shadow-black/30 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer"
@@ -197,10 +224,10 @@ export function HeroSection({
                   />
                   <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
                     <span className="size-1.5 rounded-full bg-emerald-400" />
-                    <span>Unidad Protagonista</span>
+                    <span>Destacado</span>
                   </div>
                   <div className="absolute bottom-2.5 right-2.5 rounded-lg bg-zinc-950/80 px-2.5 py-0.5 text-xs font-semibold text-zinc-300 backdrop-blur-sm">
-                    {heroVehicle.branch?.comuna}
+                    {BUSINESS.city}
                   </div>
                 </div>
 
@@ -217,21 +244,21 @@ export function HeroSection({
                     <p className="text-base font-black text-red-400 tabular-nums">
                       {clp(heroVehicle.price)}
                     </p>
-                    <span className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold">
-                      CLP Exacto
+                    <span className="text-[10px] text-zinc-400 font-semibold">
+                      Precio publicado
                     </span>
                   </div>
                 </div>
 
                 <div className="mt-3.5 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
                   <span className="text-zinc-400 font-medium flex items-center gap-1">
-                    <MapPin className="size-3.5 text-red-500" /> {heroVehicle.branch?.name}
+                    <MapPin className="size-3.5 text-red-500" /> {BUSINESS.showroom}
                   </span>
                   <button
                     onClick={() => onOpenAppointmentModal(heroVehicle.id, heroVehicle.branchId)}
-                    className="font-bold text-red-400 hover:text-red-300 inline-flex items-center gap-1 cursor-pointer"
+                    className="font-bold text-red-400 hover:text-red-300 inline-flex min-h-11 items-center gap-1 cursor-pointer"
                   >
-                    <span>Simular cita</span>
+                    <span>Agendar visita</span>
                     <ChevronRight className="size-3.5" />
                   </button>
                 </div>
@@ -336,18 +363,18 @@ export function HeroSection({
                 </div>
               </div>
 
-              {/* Sucursal */}
+              {/* Transmisión (las sucursales de la semilla no se exponen: la sede confirmada es Antofagasta) */}
               <div className="relative">
                 <select
-                  value={filters.sucursal}
-                  onChange={(e) => handleFieldChange("sucursal", e.target.value)}
+                  value={filters.transmision}
+                  onChange={(e) => handleFieldChange("transmision", e.target.value)}
                   className="w-full h-11 min-h-[44px] appearance-none rounded-xl border border-white/15 bg-zinc-950/90 px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition-colors cursor-pointer"
-                  aria-label="Filtrar por sucursal"
+                  aria-label="Filtrar por transmisión"
                 >
-                  <option value="">Todas las sucursales</option>
-                  {branches.map((b) => (
-                    <option key={b.id} value={b.id} className="bg-zinc-900 text-white">
-                      {b.name}
+                  <option value="">Toda transmisión</option>
+                  {[...new Set(vehicles.map((v) => v.transmission))].sort().map((t) => (
+                    <option key={t} value={t} className="bg-zinc-900 text-white">
+                      {t}
                     </option>
                   ))}
                 </select>

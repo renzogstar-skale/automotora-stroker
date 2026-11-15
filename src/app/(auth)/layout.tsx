@@ -24,7 +24,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </div>
           <p className="text-3xl font-extrabold tracking-tight">Stroker Gestión</p>
           <p className="mt-2 max-w-md text-sm text-white/80 leading-relaxed">
-            Administración integral de sucursales Santiago y Viña del Mar: CRM de leads, inventario, tasaciones, contratos y control financiero en moneda chilena.
+            Gestión interna: CRM de leads, inventario, tasaciones, contratos y control financiero en moneda chilena.
           </p>
         </div>
       </div>

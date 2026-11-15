@@ -401,13 +401,15 @@ async function journey7(view: View) {
   ok(`${paths.length} pantallas del panel cargan sin error`, broken.length === 0, broken.join(", "));
   ok("Sin desbordamiento horizontal en el panel", overflow.length === 0, overflow.join(", "));
   await p.goto(`${BASE}/panel/ejecutivo`);
-  ok("Gráficos renderizados en Ejecutivo", (await p.locator("svg.recharts-surface").count()) > 0);
+  // Recharts mide el contenedor en el cliente antes de dibujar el SVG.
+  ok("Gráficos renderizados en Ejecutivo", await p.locator("svg.recharts-surface").first().waitFor({ timeout: 20000 }).then(() => true).catch(() => false));
   await shot(p, "7-ejecutivo");
   await p.goto(`${BASE}/panel/leads`);
   ok("Tabla de Leads con filas", (await p.locator("table tbody tr").count()) > 0);
-  const countRows = async (q: string) => { await p.goto(`${BASE}/panel/inventario?${q}`); return p.locator("table tbody tr").count(); };
-  const [disp, sold] = [await countRows("status=DISPONIBLE"), await countRows("status=VENDIDO")];
-  ok("Filtro de estado del inventario cambia resultados", disp > 0 && disp !== sold, `${disp} vs ${sold}`);
+  // Ambas vistas pueden llenar la página: se compara el contenido, no solo el conteo.
+  const rows = async (q: string) => { await p.goto(`${BASE}/panel/inventario?${q}`); return { n: await p.locator("table tbody tr").count(), t: await p.locator("table tbody").first().innerText() }; };
+  const [disp, sold] = [await rows("status=DISPONIBLE"), await rows("status=VENDIDO")];
+  ok("Filtro de estado del inventario cambia resultados", disp.n > 0 && sold.n > 0 && disp.t !== sold.t && !/vendido/i.test(disp.t), `${disp.n} vs ${sold.n}`);
   if (view === "mobile") {
     await p.goto(`${BASE}/panel`);
     const btn = p.locator('header button[aria-label]').first();

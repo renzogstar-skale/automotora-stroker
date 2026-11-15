@@ -1,18 +1,11 @@
 import Link from "next/link";
-import {
-  MapPin,
-  Phone,
-  Shield,
-  ArrowRight,
-  Building2,
-  Calendar,
-  MessageCircle,
-  Navigation,
-} from "lucide-react";
+import { MapPin, Phone, MessageCircle, Navigation } from "lucide-react";
 import { db } from "@/lib/db";
+import { BUSINESS, DEMO_INVENTORY, waUrl } from "@/lib/business";
 import { DemoNavbar } from "@/components/hero/demo-navbar";
 import { HeroAndCatalog } from "@/components/hero/hero-and-catalog";
 import type { DemoVehicle, DemoBranch } from "@/types/hero-demo";
+import { seedOfficialStrokerInventory } from "@/server/seed-stroker";
 import { loadSite, trackView } from "./(web)/site";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +20,25 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
   let branches: DemoBranch[] = [];
 
   try {
+    const officialCount = await db.vehicle.count({ where: { source: "INSTAGRAM_OFFICIAL" } });
+    if (officialCount < 15) {
+      try {
+        await seedOfficialStrokerInventory();
+      } catch (e) {
+        console.error("Auto-sync error:", e);
+      }
+    }
+
+    // Consulta priorizando el inventario oficial de Automotora Stroker verificado desde Instagram
     const [vehiclesData, branchesData] = await Promise.all([
       db.vehicle.findMany({
-        where: { published: true, status: { in: ["DISPONIBLE", "RESERVADO"] } },
+        where: {
+          published: true,
+          status: { in: ["DISPONIBLE", "RESERVADO", "VENDIDO", "EN_CONSIGNACION"] },
+          verificationStatus: { not: "POR_CONFIRMAR" },
+          // Si existe inventario oficial de Instagram, mostrar preferentemente unidades oficiales
+          source: "INSTAGRAM_OFFICIAL",
+        },
         orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
         include: {
           branch: {
@@ -44,13 +53,27 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               region: true,
             },
           },
-          photos: { select: { url: true }, take: 1, orderBy: { order: "asc" } },
+          photos: { select: { url: true }, orderBy: { order: "asc" } },
         },
       }),
       db.branch.findMany({ orderBy: { code: "asc" } }),
     ]);
 
-    vehicles = vehiclesData as unknown as DemoVehicle[];
+    // Si la búsqueda oficial no arrojara resultados, respaldo general
+    if (vehiclesData.length === 0) {
+      const fallback = await db.vehicle.findMany({
+        where: { published: true, status: { in: ["DISPONIBLE", "RESERVADO", "VENDIDO"] } },
+        orderBy: [{ featured: "desc" }, { createdAt: "desc" }],
+        include: {
+          branch: { select: { id: true, name: true, comuna: true, code: true, address: true, phone: true, whatsapp: true, region: true } },
+          photos: { select: { url: true }, orderBy: { order: "asc" } },
+        },
+        take: 30,
+      });
+      vehicles = fallback as unknown as DemoVehicle[];
+    } else {
+      vehicles = vehiclesData as unknown as DemoVehicle[];
+    }
     branches = branchesData as unknown as DemoBranch[];
   } catch (err) {
     console.error("Error al cargar vitrina:", err);
@@ -66,76 +89,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         {/* HERO SECTION PREMIUM + BUSCADOR + VITRINA + SUCURSALES + MODAL */}
         <HeroAndCatalog initialVehicles={vehicles} branches={branches} heroTitle={cfg.heroTitle} heroSubtitle={cfg.heroSubtitle} />
 
-        {/* Sección de Acceso Demo para evaluadores */}
-        <section id="demo" className="py-16 border-t border-line bg-graphite text-white">
-          <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 sm:p-10 backdrop-blur-sm">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <div className="inline-flex items-center gap-2 rounded-lg bg-accent/20 px-3 py-1 text-xs font-bold text-red-300 mb-2">
-                    <Shield className="size-3.5" /> Entorno Demo Stroker 2026
-                  </div>
-                  <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
-                    Acceso al Panel Privado de Demostración
-                  </h3>
-                  <p className="mt-2 max-w-2xl text-sm text-white/80 leading-relaxed">
-                    Dos sucursales activas, roles diferenciados (Dueño, Gerencia, Ventas, Finanzas, Fotógrafo) y navegación completa adaptada para escritorio, tablet y móvil.
-                  </p>
-                </div>
-
-                <Link
-                  href="/login"
-                  className="btn btn-primary h-11 px-6 text-sm font-bold shadow-md"
-                >
-                  Ingresar al Panel Stroker <ArrowRight className="size-4" />
-                </Link>
-              </div>
-
-              <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 border-t border-white/10 pt-8 text-xs">
-                <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-                  <span className="font-bold text-white block">Dueña / Administradora</span>
-                  <span className="text-white/60">Camila Rojas</span>
-                  <p className="mt-1 font-mono text-[11px] text-accent font-semibold">
-                    dueno@stroker.demo
-                  </p>
-                </div>
-                <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-                  <span className="font-bold text-white block">Gerencia Santiago</span>
-                  <span className="text-white/60">Andrés Fuentes</span>
-                  <p className="mt-1 font-mono text-[11px] text-accent font-semibold">
-                    gerencia@stroker.demo
-                  </p>
-                </div>
-                <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-                  <span className="font-bold text-white block">Ventas Santiago</span>
-                  <span className="text-white/60">Valentina Soto</span>
-                  <p className="mt-1 font-mono text-[11px] text-accent font-semibold">
-                    valentina@stroker.demo
-                  </p>
-                </div>
-                <div className="rounded-xl bg-black/40 p-4 border border-white/5">
-                  <span className="font-bold text-white block">Finanzas y Cobranza</span>
-                  <span className="text-white/60">Rodrigo Díaz</span>
-                  <p className="mt-1 font-mono text-[11px] text-accent font-semibold">
-                    finanzas@stroker.demo
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 flex flex-wrap items-center justify-between gap-2 text-xs text-white/70">
-                <p>
-                  Contraseña única para todas las cuentas:{" "}
-                  <code className="font-mono font-bold text-white bg-black/60 px-2 py-0.5 rounded">
-                    Stroker2026!
-                  </code>
-                </p>
-                <p className="text-[11px] text-white/50">
-                  Zona Horaria: America/Santiago · Moneda: CLP sin decimales
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
       </main>
 
       {/* Footer */}
@@ -156,9 +109,6 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <p className="text-xs text-muted/90 max-w-sm leading-relaxed">
                 Compra, venta y consignación de autos, camionetas y motocicletas en Antofagasta. Coordinamos despachos a cualquier región de Chile.
               </p>
-              <p className="text-[11px] text-muted/60">
-                RUT: 77.123.456-7 · Antofagasta, Chile
-              </p>
             </div>
 
             {/* Columna Contacto Oficial y Enlaces */}
@@ -166,36 +116,37 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
               <span className="font-bold text-xs uppercase tracking-wider text-ink block">Contacto y Showroom</span>
               <p className="flex items-start gap-2 text-ink">
                 <MapPin className="size-4 text-accent shrink-0 mt-0.5" />
-                <span>{cfg.address || "Av. Jaime Guzmán 4050, Club Pádel Llacolén, Antofagasta, Chile."}</span>
+                <span>{cfg.address || BUSINESS.address}</span>
               </p>
               <p className="flex items-center gap-2 text-ink">
                 <Phone className="size-4 text-accent shrink-0" />
-                <a href="tel:+56971325262" className="font-bold hover:text-accent transition-colors">
-                  {cfg.phone || "+56 9 7132 5262"}
+                <a href={BUSINESS.tel} className="font-bold hover:text-accent transition-colors">
+                  {cfg.phone || BUSINESS.phone}
                 </a>
               </p>
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <p className="text-muted">{BUSINESS.hours}</p>
+              <div className="flex flex-wrap items-center gap-2 pt-2">
                 <a
-                  href="tel:+56971325262"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-3 py-1.5 font-bold text-ink hover:text-accent transition-colors"
+                  href={BUSINESS.tel}
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-3.5 font-bold text-ink hover:text-accent transition-colors"
                 >
                   <Phone className="size-3.5" />
                   <span>Llamar</span>
                 </a>
                 <a
-                  href="https://wa.me/56971325262"
+                  href={waUrl("Hola, quiero más información.")}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600/15 border border-emerald-500/30 px-3 py-1.5 font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg bg-emerald-600/15 border border-emerald-500/30 px-3.5 font-bold text-emerald-700 hover:text-emerald-600 transition-colors"
                 >
                   <MessageCircle className="size-3.5" />
                   <span>WhatsApp</span>
                 </a>
                 <a
-                  href="https://www.google.com/search?kgmid=%2Fg%2F11zd3t8786"
+                  href={BUSINESS.mapsUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-3 py-1.5 font-semibold text-ink hover:text-accent transition-colors"
+                  className="inline-flex min-h-11 items-center gap-1.5 rounded-lg border border-line bg-surface-2 px-3.5 font-semibold text-ink hover:text-accent transition-colors"
                 >
                   <Navigation className="size-3.5 text-accent" />
                   <span>Ver ubicación</span>
@@ -227,19 +178,18 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
                     Contacto y Ubicación
                   </a>
                 </li>
-                <li className="pt-1">
-                  <Link href="/login" className="text-accent hover:underline font-bold inline-flex items-center gap-1">
-                    <span>Panel Privado</span>
-                    <ArrowRight className="size-3" />
-                  </Link>
-                </li>
               </ul>
             </div>
           </div>
 
+          {DEMO_INVENTORY && (
+            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-[11px] text-amber-800 dark:text-amber-300">
+              Inventario de demostración: las unidades, precios y fotos publicados son referenciales y no constituyen oferta. Confirma disponibilidad por WhatsApp o teléfono.
+            </p>
+          )}
           <div className="border-t border-line pt-6 flex flex-wrap items-center justify-between gap-4 text-[11px] text-muted">
-            <p>© 2026 Automotora Stroker. Antofagasta, Chile · Despachos a todo Chile. Todos los derechos reservados.</p>
-            <p>Horario: Lun–Vie 09:30–19:00 · Sáb 10:00–14:00 · Moneda: CLP</p>
+            <p>© {new Date().getFullYear()} Automotora Stroker · Antofagasta, Chile · Despachos a todo Chile.</p>
+            <Link href="/login" className="hover:text-ink">Acceso equipo</Link>
           </div>
         </div>
       </footer>

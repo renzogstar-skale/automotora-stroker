@@ -14,7 +14,7 @@ export function FinanceCalculator({ price, vehicleName }: FinanceCalculatorProps
   // Por defecto 30% de pie
   const [downPercent, setDownPercent] = useState<number>(30);
   const [months, setMonths] = useState<number>(36);
-  const annualRate = 17.4; // ~1.45% mensual promedio del mercado automotriz chileno
+  const annualRate = 17.4; // Supuesto referencial (1,45% mensual); no es una tasa ofrecida por la automotora.
 
   const downAmount = useMemo(() => {
     return Math.round((price * downPercent) / 100);
@@ -91,7 +91,9 @@ export function FinanceCalculator({ price, vehicleName }: FinanceCalculatorProps
                   key={pct}
                   type="button"
                   onClick={() => setDownPercent(pct)}
-                  className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  aria-pressed={downPercent === pct}
+                  aria-label={`Pie ${pct}%`}
+                  className={`min-h-11 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                     downPercent === pct
                       ? "border-accent bg-accent text-white shadow-sm"
                       : "border-line bg-surface hover:bg-surface-2 text-ink"
@@ -120,7 +122,9 @@ export function FinanceCalculator({ price, vehicleName }: FinanceCalculatorProps
                   key={m}
                   type="button"
                   onClick={() => setMonths(m)}
-                  className={`py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
+                  aria-pressed={months === m}
+                  aria-label={`Plazo ${m} meses`}
+                  className={`min-h-11 py-2 text-xs font-bold rounded-xl border transition-all cursor-pointer ${
                     months === m
                       ? "border-accent bg-accent text-white shadow-sm"
                       : "border-line bg-surface hover:bg-surface-2 text-ink"
@@ -146,6 +150,17 @@ export function FinanceCalculator({ price, vehicleName }: FinanceCalculatorProps
               <span className="text-muted">Monto total a financiar:</span>
               <span className="font-bold text-accent tabular-nums">{clp(loanCalculation.principal)}</span>
             </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Intereses estimados:</span>
+              <span className="font-bold text-ink tabular-nums">{clp(loanCalculation.interest)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted">Costo total estimado del crédito:</span>
+              <span className="font-bold text-ink tabular-nums" data-testid="costo-total">{clp(loanCalculation.totalCredit)}</span>
+            </div>
+            <p className="pt-1 text-[11px] text-muted">
+              Tasa anual supuesta {annualRate}% (referencial). No incluye seguros, impuesto de timbres y estampillas ni gastos operacionales; la CAE y el costo total definitivo los informa la entidad financiera.
+            </p>
           </div>
         </div>
 
@@ -155,7 +170,7 @@ export function FinanceCalculator({ price, vehicleName }: FinanceCalculatorProps
             <span className="text-[11px] font-bold uppercase tracking-wider text-accent block">
               Cuota Mensual Estimada
             </span>
-            <div className="mt-2 text-3xl sm:text-4xl font-black text-ink tabular-nums">
+            <div className="mt-2 text-3xl sm:text-4xl font-black text-ink tabular-nums" data-testid="cuota" aria-live="polite">
               {clp(loanCalculation.cuota)}
               <span className="text-sm font-semibold text-muted ml-1">/ mes</span>
             </div>

@@ -1,51 +1,54 @@
-import { ShieldCheck, FileCheck, Landmark, Store, Users, AlertCircle } from "lucide-react";
+import { CalendarCheck, FileCheck, Landmark, Store, Truck, AlertCircle } from "lucide-react";
+import { BUSINESS, DEMO_INVENTORY } from "@/lib/business";
 
+/** Solo beneficios que el negocio ofrece de forma comprobable; nada de inspecciones ni garantías sin respaldo. */
 export function TrustIndicators() {
   const indicators = [
     {
-      icon: ShieldCheck,
-      title: "Revisión Técnica",
-      desc: "120 puntos inspeccionados",
-      detail: "Mecánica y seguridad al día",
+      icon: Store,
+      title: BUSINESS.showroom,
+      desc: "Av. Jaime Guzmán 4050",
+      detail: "Visita con hora coordinada",
+    },
+    {
+      icon: CalendarCheck,
+      title: "Test drive",
+      desc: "Agenda desde cada ficha",
+      detail: "Te confirmamos el horario",
     },
     {
       icon: FileCheck,
       title: "Documentación",
-      desc: "Historial de dominio al día",
-      detail: "Transferencia rápida y segura",
+      desc: "Pide el CAV de la unidad",
+      detail: "Antes de reservar o pagar",
     },
     {
       icon: Landmark,
       title: "Financiamiento",
-      desc: "Simulación de crédito",
-      detail: "Cuotas fijas en pesos CLP",
+      desc: "Simulación referencial",
+      detail: "Sujeto a evaluación crediticia",
     },
     {
-      icon: Store,
-      title: "Sucursales Físicas",
-      desc: "Santiago y Viña del Mar",
-      detail: "Exhibición y entrega presencial",
-    },
-    {
-      icon: Users,
-      title: "Atención Personalizada",
-      desc: "Asesoría comercial experta",
-      detail: "Test drive y tasación en sala",
+      icon: Truck,
+      title: "Despachos a todo Chile",
+      desc: "Cotiza costo y plazo",
+      detail: "Coordinado por WhatsApp",
     },
   ];
 
   return (
     <div className="border-t border-white/10 bg-gradient-to-b from-zinc-950/80 to-zinc-950/95 py-8 sm:py-10">
       <div className="mx-auto max-w-[1280px] px-4 sm:px-6 lg:px-8">
-        {/* Etiqueta ilustrativa demo */}
         <div className="flex items-center justify-between flex-wrap gap-2 mb-6">
-          <span className="text-[11px] font-bold tracking-wider uppercase text-red-500">
-            Estándares Automotora Stroker
+          <span className="text-xs font-bold text-red-400">
+            Cómo compras en Stroker
           </span>
-          <span className="inline-flex items-center gap-1.5 text-[11px] text-zinc-400">
-            <AlertCircle className="size-3 text-amber-400" />
-            <span>Beneficios comerciales ilustrativos para demostración</span>
-          </span>
+          {DEMO_INVENTORY && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] text-zinc-400">
+              <AlertCircle className="size-3 text-amber-400" />
+              <span>Inventario publicado de demostración</span>
+            </span>
+          )}
         </div>
 
         {/* Grid de 5 pilares de confianza */}

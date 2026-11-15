@@ -13,20 +13,33 @@ import { DEFAULTS, getSetting, setSetting, type BranchWeb, type WebConfig } from
 
 /** Campos aprobados para la vitrina: nunca costo, margen, patente, VIN ni datos del propietario. */
 export const publicSelect = {
-  id: true, slug: true, brand: true, model: true, version: true, year: true, km: true, transmission: true, fuel: true, bodyType: true,
-  color: true, price: true, status: true, description: true, condition: true, featured: true,
+  id: true, slug: true, stockCode: true, brand: true, model: true, version: true, year: true, km: true, transmission: true, fuel: true, bodyType: true,
+  color: true, price: true, status: true, description: true, originalCaption: true, features: true, instagramUrl: true, minDownPayment: true,
+  verificationStatus: true, condition: true, featured: true,
   branch: { select: { id: true, name: true, comuna: true, whatsapp: true } },
   photos: { select: { url: true, isCover: true }, orderBy: { order: "asc" } },
 } satisfies Prisma.VehicleSelect;
 export type PublicVehicle = Prisma.VehicleGetPayload<{ select: typeof publicSelect }>;
 
-export const publicWhere: Prisma.VehicleWhereInput = { published: true, status: { in: ["DISPONIBLE", "RESERVADO"] } };
+export const publicWhere: Prisma.VehicleWhereInput = {
+  published: true,
+  status: { in: ["DISPONIBLE", "RESERVADO", "VENDIDO", "EN_CONSIGNACION"] },
+  verificationStatus: { not: "POR_CONFIRMAR" }
+};
 
 export function catalogWhere(q: Record<string, string | undefined>): Prisma.VehicleWhereInput {
-  const w: Prisma.VehicleWhereInput = { ...publicWhere };
+  const w: Prisma.VehicleWhereInput = { published: true };
+  if (q.estado && ["DISPONIBLE", "RESERVADO", "VENDIDO", "EN_CONSIGNACION"].includes(q.estado)) {
+    w.status = q.estado as any;
+  } else {
+    w.status = { in: ["DISPONIBLE", "RESERVADO", "VENDIDO", "EN_CONSIGNACION"] };
+  }
   if (q.marca) w.brand = q.marca;
+  if (q.modelo) w.model = { contains: q.modelo, mode: "insensitive" };
   if (q.tipo) w.bodyType = q.tipo;
   if (q.sucursal) w.branchId = q.sucursal;
+  if (q.combustible) w.fuel = { equals: q.combustible, mode: "insensitive" };
+  if (q.transmision) w.transmission = { equals: q.transmision, mode: "insensitive" };
   if (q.anio && +q.anio) w.year = { gte: +q.anio };
   if (q.precio && +q.precio) w.price = { lte: +q.precio };
   if (q.km && +q.km) w.km = { lte: +q.km };

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma db push --accept-data-loss && tsx prisma/seed/seed-stroker.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "db": "node scripts/db.mjs",

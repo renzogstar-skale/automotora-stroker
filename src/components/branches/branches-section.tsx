@@ -23,6 +23,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import type { DemoBranch, DemoVehicle } from "@/types/hero-demo";
+import { BUSINESS, waUrl } from "@/lib/business";
 
 interface BranchesSectionProps {
   branches: DemoBranch[];
@@ -37,9 +38,9 @@ export function BranchesSection({
   onSelectBranchFilter,
   onOpenAppointmentModal,
 }: BranchesSectionProps) {
-  const googleMapsUrl = "https://www.google.com/search?kgmid=%2Fg%2F11zd3t8786";
-  const whatsAppUrl = "https://wa.me/56971325262";
-  const phoneUrl = "tel:+56971325262";
+  const googleMapsUrl = BUSINESS.mapsUrl;
+  const whatsAppUrl = waUrl("Hola, quiero más información.");
+  const phoneUrl = BUSINESS.tel;
 
   return (
     <section id="sucursales" className="py-16 sm:py-24 border-t border-line bg-surface-2/30 scroll-mt-20">
@@ -69,7 +70,7 @@ export function BranchesSection({
               <div className="rounded-2xl border border-line bg-surface-2/50 p-4">
                 <Car className="size-6 text-accent mb-2" />
                 <h4 className="font-bold text-sm text-ink">Catálogo Multimarca</h4>
-                <p className="text-xs text-muted mt-1">Autos, camionetas y motocicletas inspeccionados y listos para transferir.</p>
+                <p className="text-xs text-muted mt-1">Autos, camionetas y motocicletas. Consulta disponibilidad y documentación de cada unidad.</p>
               </div>
 
               <div className="rounded-2xl border border-line bg-surface-2/50 p-4">
@@ -120,7 +121,7 @@ export function BranchesSection({
               <div className="pt-5 mt-4 border-t border-line">
                 <a
                   href="#vitrina"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:text-accent/80 transition-colors"
+                  className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold text-accent hover:text-accent/80 transition-colors"
                 >
                   <span>Explorar catálogo</span>
                   <ArrowRight className="size-3.5" />
@@ -146,7 +147,7 @@ export function BranchesSection({
                   href={whatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
+                  className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
                 >
                   <MessageCircle className="size-3.5" />
                   <span>Consultar consignación</span>
@@ -172,7 +173,7 @@ export function BranchesSection({
                   href={whatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-accent hover:text-accent/80 transition-colors"
+                  className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold text-accent hover:text-accent/80 transition-colors"
                 >
                   <MessageCircle className="size-3.5" />
                   <span>Evaluar financiamiento</span>
@@ -198,7 +199,7 @@ export function BranchesSection({
                   href={whatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
+                  className="inline-flex min-h-11 items-center gap-1.5 text-xs font-bold text-emerald-600 hover:text-emerald-500 transition-colors"
                 >
                   <MessageCircle className="size-3.5" />
                   <span>Cotizar despacho</span>
@@ -231,8 +232,8 @@ export function BranchesSection({
             </div>
 
             <div className="flex items-center gap-2 text-xs font-medium text-muted bg-surface border border-line rounded-xl px-3.5 py-2">
-              <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span>Horario Continuo · Lunes a Sábado</span>
+              <Clock className="size-3.5 text-accent" />
+              <span>{BUSINESS.hours}</span>
             </div>
           </div>
 
@@ -358,7 +359,7 @@ export function BranchesSection({
                       Av. Jaime Guzmán 4050, Antofagasta
                     </p>
                     <p className="text-xs text-zinc-400 mt-2">
-                      Acceso expedito, estacionamiento para clientes y exhibición de vehículos en entorno deportivo y seguro.
+                      Coordina tu visita por WhatsApp para asegurar que la unidad que te interesa esté en exhibición.
                     </p>
                   </div>
 
@@ -397,62 +398,54 @@ export function BranchesSection({
         <div className="rounded-2xl border border-line bg-surface p-6 sm:p-8 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6 border-b border-line pb-4">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-accent">
-                Transparencia y Garantía Stroker
+              <span className="text-xs font-bold text-accent">
+                Antes de comprar
               </span>
               <h3 className="text-xl sm:text-2xl font-black text-ink mt-0.5">
-                Pilares Comerciales y de Seguridad
+                Compra informada
               </h3>
-            </div>
-
-            <div className="inline-flex items-center gap-1.5 rounded-lg bg-surface-2 border border-line px-3 py-1.5 text-xs font-medium text-muted">
-              <ShieldCheck className="size-4 text-accent" />
-              <span>Estándar Operativo Verificado</span>
             </div>
           </div>
 
+          {/* Recomendaciones al comprador: no se atribuyen inspecciones, garantías ni reseñas que no estén documentadas. */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {/* Pilar 1: Revisión Técnica */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 font-bold text-ink">
                 <CheckCircle2 className="size-4.5 text-emerald-600 shrink-0" />
-                <span>Revisión Técnica 120 Puntos</span>
+                <span>Prueba la unidad</span>
               </div>
               <p className="text-xs text-muted leading-relaxed">
-                Inspección mecánica y computarizada exhaustiva antes de su exhibición: frenos, motor, dirección y tren delantero.
+                Agenda un test drive y, si lo deseas, una revisión con el mecánico de tu confianza antes de decidir.
               </p>
             </div>
 
-            {/* Pilar 2: Documentación */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 font-bold text-ink">
                 <FileCheck2 className="size-4.5 text-emerald-600 shrink-0" />
-                <span>Documentación Verificada</span>
+                <span>Revisa los papeles</span>
               </div>
               <p className="text-xs text-muted leading-relaxed">
-                Validación de Certificado de Anotaciones Vigentes (CAV) en Registro Civil. Sin prendas, órdenes judiciales ni multas de tránsito impagas.
+                Solicita el Certificado de Anotaciones Vigentes (CAV), revisión técnica y permiso de circulación de la unidad antes de reservar.
               </p>
             </div>
 
-            {/* Pilar 3: Garantías Reales */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 font-bold text-ink">
                 <ShieldCheck className="size-4.5 text-emerald-600 shrink-0" />
-                <span>Garantía Legal Ley 19.496</span>
+                <span>Garantía por escrito</span>
               </div>
               <p className="text-xs text-muted leading-relaxed">
-                Garantía legal de 3 meses en motor y transmisión para unidades seminuevas adquiridas en sala de ventas, respaldada por contrato.
+                Pide las condiciones de garantía de cada unidad por escrito antes de firmar. Rigen los derechos de la Ley 19.496 del consumidor.
               </p>
             </div>
 
-            {/* Pilar 4: Política de Testimonios */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 font-bold text-ink">
                 <AlertCircle className="size-4.5 text-amber-500 shrink-0" />
-                <span>Testimonios Verificables</span>
+                <span>Sin reseñas simuladas</span>
               </div>
               <p className="text-xs text-muted leading-relaxed">
-                No inventamos opiniones ni valoraciones comerciales simuladas. Las encuestas de satisfacción se recogen exclusivamente de compradores reales tras la firma en notaría.
+                No publicamos testimonios ni valoraciones inventadas. Las opiniones de clientes se mostrarán solo cuando sean verificables.
               </p>
             </div>
           </div>

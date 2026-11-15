@@ -19,11 +19,14 @@ interface HeroAndCatalogProps {
 
 const DEFAULT_FILTERS: HeroFilterState = {
   marca: "",
+  modelo: "",
   precioMin: "",
   precioMax: "",
   anio: "",
   kmMax: "",
   transmision: "",
+  combustible: "",
+  estado: "",
   sucursal: "",
   orden: "destacados",
 };
@@ -32,19 +35,30 @@ export function HeroAndCatalog({ initialVehicles, branches, heroTitle, heroSubti
   // Filtros iniciales desde la URL (enlaces compartidos); la página es dinámica, así servidor y cliente coinciden.
   const params = useSearchParams();
   const [filters, setFilters] = useState<HeroFilterState>(() => ({
-    marca: params.get("marca") || "", precioMin: params.get("precioMin") || "", precioMax: params.get("precioMax") || "",
-    anio: params.get("anio") || "", kmMax: params.get("kmMax") || "", transmision: params.get("transmision") || "",
-    sucursal: params.get("sucursal") || "", orden: (params.get("orden") as HeroFilterState["orden"]) || "destacados",
+    marca: params.get("marca") || "",
+    modelo: params.get("modelo") || "",
+    precioMin: params.get("precioMin") || "",
+    precioMax: params.get("precioMax") || "",
+    anio: params.get("anio") || "",
+    kmMax: params.get("kmMax") || "",
+    transmision: params.get("transmision") || "",
+    combustible: params.get("combustible") || "",
+    estado: params.get("estado") || "",
+    sucursal: params.get("sucursal") || "",
+    orden: (params.get("orden") as HeroFilterState["orden"]) || "destacados",
   }));
   const [isAppointmentModalOpen, setIsAppointmentModalOpen] = useState(false);
   const [selectedVehicleForModal, setSelectedVehicleForModal] = useState<string | undefined>();
   const [selectedBranchForModal, setSelectedBranchForModal] = useState<string | undefined>();
 
-  // Filtrado y ordenamiento reactivo sobre el inventario DEMO existente
+  // Filtrado y ordenamiento reactivo sobre el inventario
   const filteredAndSortedVehicles = useMemo(() => {
-    // 1. Filtrado
+    // 1. Filtrado simultáneo
     const list = initialVehicles.filter((v) => {
       if (filters.marca && v.brand !== filters.marca) {
+        return false;
+      }
+      if (filters.modelo && !v.model.toLowerCase().includes(filters.modelo.toLowerCase())) {
         return false;
       }
       if (filters.sucursal && v.branchId !== filters.sucursal) {
@@ -54,6 +68,12 @@ export function HeroAndCatalog({ initialVehicles, branches, heroTitle, heroSubti
         return false;
       }
       if (filters.transmision && v.transmission.toLowerCase() !== filters.transmision.toLowerCase()) {
+        return false;
+      }
+      if (filters.combustible && v.fuel.toLowerCase() !== filters.combustible.toLowerCase()) {
+        return false;
+      }
+      if (filters.estado && v.status !== filters.estado) {
         return false;
       }
       if (filters.precioMin && v.price < parseInt(filters.precioMin, 10)) {
@@ -68,7 +88,7 @@ export function HeroAndCatalog({ initialVehicles, branches, heroTitle, heroSubti
       return true;
     });
 
-    // 2. Ordenamiento por precio, año o kilometraje
+    // 2. Ordenamiento inteligente
     return [...list].sort((a, b) => {
       switch (filters.orden) {
         case "precio-asc":
@@ -81,6 +101,8 @@ export function HeroAndCatalog({ initialVehicles, branches, heroTitle, heroSubti
           return a.year - b.year;
         case "km-asc":
           return a.km - b.km;
+        case "recientes":
+          return b.year - a.year || b.price - a.price;
         case "destacados":
         default:
           if (a.featured && !b.featured) return -1;

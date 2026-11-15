@@ -4,17 +4,14 @@ import { ActionForm, Submit } from "@/components/client/forms";
 import type { ActionState } from "@/lib/action";
 import { Lock, Mail, UserCheck } from "lucide-react";
 
-const DEMO_ACCOUNTS = [
-  { label: "Dueña / Admin", name: "Camila Rojas", email: "dueno@stroker.demo" },
-  { label: "Gerencia Santiago", name: "Andrés Fuentes", email: "gerencia@stroker.demo" },
-  { label: "Vendedora Santiago", name: "Valentina Soto", email: "valentina@stroker.demo" },
-  { label: "Vendedora Viña", name: "Josefa Muñoz", email: "josefa@stroker.demo" },
-  { label: "Finanzas", name: "Rodrigo Díaz", email: "finanzas@stroker.demo" },
-];
+export type DemoAccess = { accounts: { label: string; email: string }[]; password: string };
 
-export function DemoLoginForm({ action }: { action: (s: ActionState, fd: FormData) => Promise<ActionState> }) {
-  const [email, setEmail] = useState("dueno@stroker.demo");
-  const [password, setPassword] = useState("Stroker2026!");
+/** `demo` lo entrega el servidor solo fuera de producción (o con DEMO_LOGIN=1); así las credenciales no viajan en el bundle. */
+export function DemoLoginForm({ action, demo = null }: { action: (s: ActionState, fd: FormData) => Promise<ActionState>; demo?: DemoAccess | null }) {
+  const DEMO_ACCOUNTS = demo?.accounts ?? [];
+  const DEMO_PASSWORD = demo?.password ?? "";
+  const [email, setEmail] = useState(DEMO_ACCOUNTS[0]?.email ?? "");
+  const [password, setPassword] = useState(DEMO_PASSWORD);
 
   return (
     <div className="space-y-4">
@@ -56,8 +53,8 @@ export function DemoLoginForm({ action }: { action: (s: ActionState, fd: FormDat
         </div>
       </ActionForm>
 
-      {/* Selector de Cuentas Demo */}
-      <div className="mt-6 rounded-xl border border-line bg-surface-2/60 p-4 text-xs">
+      {/* Selector de Cuentas Demo (solo entornos de prueba) */}
+      {demo && <div className="mt-6 rounded-xl border border-line bg-surface-2/60 p-4 text-xs">
         <p className="font-bold text-ink mb-2 flex items-center gap-1.5">
           <UserCheck className="size-4 text-accent" /> Cuentas demo preconfiguradas:
         </p>
@@ -68,7 +65,7 @@ export function DemoLoginForm({ action }: { action: (s: ActionState, fd: FormDat
               type="button"
               onClick={() => {
                 setEmail(acc.email);
-                setPassword("Stroker2026!");
+                setPassword(DEMO_PASSWORD);
               }}
               className={`rounded-lg border px-2.5 py-1 text-[11px] font-semibold transition-all duration-200 ${
                 email === acc.email
@@ -83,10 +80,10 @@ export function DemoLoginForm({ action }: { action: (s: ActionState, fd: FormDat
         <div className="mt-3 flex items-center justify-between border-t border-line/60 pt-2 text-[11px] text-muted">
           <span>Contraseña demo:</span>
           <code className="font-mono font-bold text-ink bg-surface px-2 py-0.5 rounded border border-line">
-            Stroker2026!
+            {DEMO_PASSWORD}
           </code>
         </div>
-      </div>
+      </div>}
     </div>
   );
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { X, Calendar, Clock, MapPin, Car, CheckCircle2, AlertCircle, ArrowRight, ShieldCheck, Loader2 } from "lucide-react";
 import { clp } from "@/lib/format";
+import { BUSINESS } from "@/lib/business";
 import { publicFormAction } from "@/app/(web)/actions";
 import type { DemoVehicle, DemoBranch } from "@/types/hero-demo";
 
@@ -26,12 +27,9 @@ const tomorrow = () => {
  * (origen Web) y agenda la cita si el horario está libre. El token evita duplicados por doble clic o reintento.
  * Se monta al abrirse (el padre lo renderiza condicionalmente), así el estado inicial sale de las props.
  */
-export function DemoAppointmentModal({ onClose, vehicles, branches, initialVehicleId, initialBranchId }: DemoAppointmentModalProps) {
-  const firstOf = (branchId?: string) => vehicles.find((v) => !branchId || v.branchId === branchId)?.id ?? "";
-  const [selectedBranchId, setSelectedBranchId] = useState(
-    () => vehicles.find((v) => v.id === initialVehicleId)?.branchId ?? initialBranchId ?? branches[0]?.id ?? "",
-  );
-  const [selectedVehicleId, setSelectedVehicleId] = useState(() => initialVehicleId ?? firstOf(initialBranchId ?? branches[0]?.id));
+export function DemoAppointmentModal({ onClose, vehicles, initialVehicleId }: DemoAppointmentModalProps) {
+  // Una sola sede pública (Antofagasta): se listan todas las unidades; la sucursal interna la resuelve el servidor.
+  const [selectedVehicleId, setSelectedVehicleId] = useState(() => initialVehicleId ?? vehicles[0]?.id ?? "");
   const [date, setDate] = useState(tomorrow);
   const [time, setTime] = useState("11:30");
   const [customerName, setCustomerName] = useState("");
@@ -49,17 +47,12 @@ export function DemoAppointmentModal({ onClose, vehicles, branches, initialVehic
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onClose]);
 
-  const branchVehicles = vehicles.filter((v) => !selectedBranchId || v.branchId === selectedBranchId);
+  const branchVehicles = vehicles;
   const selectedVehicle = vehicles.find((v) => v.id === selectedVehicleId);
-
-  const handleBranchChange = (id: string) => {
-    setSelectedBranchId(id);
-    if (selectedVehicle?.branchId !== id) setSelectedVehicleId(firstOf(id));
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedVehicle) { setError("Elige un vehículo de la sucursal."); return; }
+    if (!selectedVehicle) { setError("Elige un vehículo."); return; }
     setIsSubmitting(true);
     setError(null);
     setFieldErrors({});
@@ -77,7 +70,7 @@ export function DemoAppointmentModal({ onClose, vehicles, branches, initialVehic
       if (r?.ok) {
         setConfirmation({
           vehicleName: `${selectedVehicle.brand} ${selectedVehicle.model} (${selectedVehicle.year})`,
-          branchName: branches.find((b) => b.id === selectedVehicle.branchId)?.name ?? "",
+          branchName: BUSINESS.showroom,
           date, time, customerName: customerName.trim(),
         });
       } else {
@@ -112,8 +105,8 @@ export function DemoAppointmentModal({ onClose, vehicles, branches, initialVehic
                 <Calendar className="size-3.5" />
                 <span>Test drive y visita</span>
               </div>
-              <h2 id="modal-title" className="text-2xl font-bold tracking-tight text-white">Agendar visita a sucursal</h2>
-              <p className="mt-1 text-xs sm:text-sm text-zinc-400">Elige la unidad, la sucursal y el horario. Un ejecutivo confirmará tu visita.</p>
+              <h2 id="modal-title" className="text-2xl font-bold tracking-tight text-white">Agendar visita o test drive</h2>
+              <p className="mt-1 text-xs sm:text-sm text-zinc-400">Elige la unidad y el horario. Un ejecutivo confirmará tu visita por teléfono o WhatsApp.</p>
             </div>
 
             {error && (
@@ -123,21 +116,16 @@ export function DemoAppointmentModal({ onClose, vehicles, branches, initialVehic
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label htmlFor="appt-branch" className={labelCls}>Sucursal de atención</label>
-                <div className="relative">
-                  <select id="appt-branch" value={selectedBranchId} onChange={(e) => handleBranchChange(e.target.value)} required className={`${inputCls} appearance-none`}>
-                    {branches.map((b) => <option key={b.id} value={b.id} className="bg-zinc-900 text-white">{b.name} — {b.address}, {b.comuna}</option>)}
-                  </select>
-                  <MapPin className="pointer-events-none absolute right-3.5 top-3 size-4 text-zinc-400" />
-                </div>
-              </div>
+              <p className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-xs text-zinc-300">
+                <MapPin className="size-4 shrink-0 text-red-400" />
+                <span><strong className="text-white">{BUSINESS.showroom}</strong> · {BUSINESS.address}<br />{BUSINESS.hours}</span>
+              </p>
 
               <div>
                 <label htmlFor="appt-vehicle" className={labelCls}>Vehículo de interés</label>
                 <div className="relative">
                   <select id="appt-vehicle" value={selectedVehicleId} onChange={(e) => setSelectedVehicleId(e.target.value)} required className={`${inputCls} appearance-none`}>
-                    {branchVehicles.length === 0 && <option value="">Sin unidades disponibles en esta sucursal</option>}
+                    {branchVehicles.length === 0 && <option value="">Sin unidades disponibles</option>}
                     {branchVehicles.map((v) => <option key={v.id} value={v.id} className="bg-zinc-900 text-white">{v.brand} {v.model} ({v.year}) — {clp(v.price)}</option>)}
                   </select>
                   <Car className="pointer-events-none absolute right-3.5 top-3 size-4 text-zinc-400" />
@@ -194,7 +182,7 @@ export function DemoAppointmentModal({ onClose, vehicles, branches, initialVehic
             <h3 className="text-2xl font-bold tracking-tight text-white">¡Listo, {confirmation.customerName.split(" ")[0]}!</h3>
             <p className="mt-2 text-xs sm:text-sm text-zinc-300 max-w-md mx-auto">Recibimos tu solicitud de test drive; un ejecutivo te confirmará el horario.</p>
             <div className="mt-6 rounded-xl border border-white/10 bg-zinc-900/90 p-4 text-left text-xs sm:text-sm space-y-2.5">
-              {[["Vehículo", confirmation.vehicleName], ["Sucursal", confirmation.branchName], ["Fecha y hora", `${confirmation.date} · ${confirmation.time} hrs`]].map(([k, v]) => (
+              {[["Vehículo", confirmation.vehicleName], ["Lugar", confirmation.branchName], ["Fecha y hora", `${confirmation.date} · ${confirmation.time} hrs`]].map(([k, v]) => (
                 <div key={k} className="flex justify-between gap-3 border-b border-white/5 pb-2 last:border-0 last:pb-0"><span className="text-zinc-400">{k}:</span><span className="font-semibold text-white text-right">{v}</span></div>
               ))}
             </div>

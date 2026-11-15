@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, MapPin, Gauge, SlidersHorizontal, Fuel, MessageCircle } from "lucide-react";
 import { clp, km } from "@/lib/format";
+import { BUSINESS } from "@/lib/business";
 import type { PublicVehicle } from "@/server/web";
 
 interface SimilarVehiclesProps {
@@ -22,7 +23,7 @@ export function SimilarVehicles({ vehicles, href }: SimilarVehiclesProps) {
             Vehículos Similares en Stock
           </h2>
           <p className="text-sm text-muted mt-1">
-            Otras unidades seleccionadas en nuestras sucursales de Santiago y Viña del Mar.
+            Otras unidades publicadas en {BUSINESS.showroom}.
           </p>
         </div>
 
@@ -68,7 +69,7 @@ export function SimilarVehicles({ vehicles, href }: SimilarVehiclesProps) {
                     </span>
                   </div>
                   <div className="absolute bottom-2.5 right-2.5 rounded-lg bg-black/75 backdrop-blur-md px-2 py-0.5 text-[11px] font-semibold text-white">
-                    {v.branch?.comuna}
+                    {BUSINESS.city}
                   </div>
                   <div className="absolute bottom-2.5 left-2.5 rounded-md bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md px-2 py-0.5 text-[11px] font-black text-ink shadow-sm">
                     {v.year}
@@ -108,7 +109,7 @@ export function SimilarVehicles({ vehicles, href }: SimilarVehiclesProps) {
                     </div>
                     <div>
                       <span className="block text-[10px] font-bold uppercase tracking-wider text-muted flex items-center gap-1">
-                        <Fuel className="size-3 text-accent" /> Motor
+                        <Fuel className="size-3 text-accent" /> Comb.
                       </span>
                       <span className="font-bold text-ink truncate block mt-0.5">{v.fuel}</span>
                     </div>
@@ -119,7 +120,7 @@ export function SimilarVehicles({ vehicles, href }: SimilarVehiclesProps) {
               {/* Acciones */}
               <div className="border-t border-line px-5 py-3 bg-surface-2/40 flex items-center justify-between gap-2 text-xs">
                 <span className="text-muted font-medium flex items-center gap-1.5 truncate">
-                  <MapPin className="size-3.5 text-accent shrink-0" /> {v.branch?.name}
+                  <MapPin className="size-3.5 text-accent shrink-0" /> {BUSINESS.city}
                 </span>
 
                 <Link

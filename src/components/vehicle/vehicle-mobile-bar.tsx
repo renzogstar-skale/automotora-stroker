@@ -7,9 +7,10 @@ interface VehicleMobileBarProps {
   price: number;
   waLink: string;
   isReservado: boolean;
+  isVendido?: boolean;
 }
 
-export function VehicleMobileBar({ price, waLink, isReservado }: VehicleMobileBarProps) {
+export function VehicleMobileBar({ price, waLink, isReservado, isVendido }: VehicleMobileBarProps) {
   const scrollToContact = () => {
     const el = document.getElementById("consulta-form") || document.getElementById("agenda-visita-section");
     if (el) {
@@ -23,14 +24,14 @@ export function VehicleMobileBar({ price, waLink, isReservado }: VehicleMobileBa
         {/* Precio resumido */}
         <div className="min-w-0">
           <span className="block text-[10px] font-bold uppercase tracking-wider text-zinc-400">
-            {isReservado ? "Reservado" : "Precio al contado"}
+            {isVendido ? "🔴 Vendido" : isReservado ? "🟠 Reservado" : "Precio al contado"}
           </span>
           <span className="text-xl font-black text-white tabular-nums tracking-tight">
             {clp(price)}
           </span>
         </div>
 
-        {/* Botones de acción móvil (con áreas táctiles ≥44px) */}
+        {/* Botones de acción móvil */}
         <div className="flex items-center gap-2 shrink-0">
           <a
             href={waLink}
@@ -39,10 +40,10 @@ export function VehicleMobileBar({ price, waLink, isReservado }: VehicleMobileBa
             className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white px-3.5 min-h-[44px] text-xs font-bold shadow-md shadow-emerald-950/50 transition-colors active:scale-95 cursor-pointer"
           >
             <MessageCircle className="size-4" />
-            <span>WhatsApp</span>
+            <span>{isVendido ? "Consultar similar" : "WhatsApp"}</span>
           </a>
 
-          {!isReservado ? (
+          {!isReservado && !isVendido ? (
             <button
               type="button"
               onClick={scrollToContact}
@@ -57,7 +58,7 @@ export function VehicleMobileBar({ price, waLink, isReservado }: VehicleMobileBa
               onClick={scrollToContact}
               className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-white/20 bg-white/10 text-white px-3.5 min-h-[44px] text-xs font-semibold active:scale-95 cursor-pointer"
             >
-              <span>Consultar</span>
+              <span>{isVendido ? "Ver similares" : "Consultar"}</span>
             </button>
           )}
         </div>
