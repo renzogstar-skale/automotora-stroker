@@ -49,3 +49,6 @@ next-env.d.ts
 !/storage/inventario_stroker_instagram.csv
 !/storage/imported_vehicles_with_local_photos.json
 !/storage/screenshots
+
+.vercel
+.env*
