@@ -1,0 +1,31 @@
+{
+  "_criterio": "Datos solo de la descripción de cada publicación de @automotora_stroker, re-verificada en vivo el 2026-11-15. VENDIDO/RESERVADO: marca explícita en la descripción. DISPONIBLE: aviso de venta vigente (sep–nov 2026) sin marca de venta ni reserva; la automotora edita sus avisos para marcar VENDIDO/RESERVADO. POR_CONFIRMAR: aviso antiguo sin seguimiento o sin datos suficientes.",
+  "imports": {
+    "Dc4NffpmJhh": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 04-09-2026 sin marca de venta/reserva." },
+    "Dc_kbVVkX19": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 07-09-2026 sin marca de venta/reserva." },
+    "DeIHI4eGMRk": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 05-10-2026 sin marca de venta/reserva." },
+    "Dfu6Q3ImH5-": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 14-11-2026 sin marca de venta/reserva." },
+    "Dfpv8SpmCFm": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 12-11-2026. Kilometraje y pie no publicados (pendientes)." },
+    "DfpvQfNmHvK": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 12-11-2026. La descripción dice versión TRENDLINE y también menciona Comfortline: confirmar versión." },
+    "DfnAAeDoGDE": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 11-11-2026 sin marca de venta/reserva." },
+    "Dfh_l4SmP7s": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 09-11-2026 sin marca de venta/reserva." },
+    "DfXqA9zGFbM": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 05-11-2026 sin marca de venta/reserva." },
+    "DfC1yDaEVrV": { "status": "APROBADO", "commercialStatus": "VENDIDO", "note": "La descripción indica ✅VENDIDO✅." },
+    "DfCxuHbEUkq": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 28-10-2026 sin marca de venta/reserva." },
+    "DfCtSRhkffk": { "status": "APROBADO", "commercialStatus": "RESERVADO", "note": "La descripción indica ✅RESERVADO✅." },
+    "Dc14EX4xux5": { "status": "APROBADO", "commercialStatus": "DISPONIBLE", "note": "Aviso vigente 03-09-2026. Kilometraje, transmisión y combustible no publicados (pendientes)." },
+    "DQnfCCJDJb3": { "status": "APROBADO", "commercialStatus": "POR_CONFIRMAR", "note": "Aviso del 03-11-2025 sin seguimiento. Publica 49 HORAS de uso (no km). Transmisión, combustible y color no publicados." },
+    "DQm5t1Ckd29": { "status": "APROBADO", "commercialStatus": "POR_CONFIRMAR", "note": "Aviso del 03-11-2025 sin seguimiento. Publica 27 HORAS de uso (no km). Versión, transmisión, combustible y color no publicados." },
+    "DVJKnRjkV-h": { "status": "PENDIENTE", "commercialStatus": "POR_CONFIRMAR", "note": "Revisión manual: misma descripción que DVJKgsvEYt6 (mismo día) y posible misma unidad que Dc14EX4xux5 (Coleman Lantern 2021) con precio anterior $32.000.000. No se crea vehículo para evitar duplicado." },
+    "DVJKgsvEYt6": { "status": "PENDIENTE", "commercialStatus": "POR_CONFIRMAR", "note": "Revisión manual: misma descripción que DVJKnRjkV-h (mismo día) y posible misma unidad que Dc14EX4xux5 (Coleman Lantern 2021) con precio anterior $32.000.000. No se crea vehículo para evitar duplicado." },
+    "DexG0fntLyM": { "status": "RECHAZADO", "commercialStatus": "POR_CONFIRMAR", "note": "No es aviso de vehículo: reel institucional de la automotora." },
+    "CvlQBFrtPi7": { "status": "RECHAZADO", "commercialStatus": "POR_CONFIRMAR", "note": "No es aviso de vehículo: reel de captación de consignaciones (sin descripción)." },
+    "CoKVUE4Awku": { "status": "RECHAZADO", "commercialStatus": "POR_CONFIRMAR", "note": "No es aviso de vehículo: repost de entrega a cliente de la cuenta nvmotorsportant (sin descripción)." }
+  },
+  "vehicles": {
+    "Dfpv8SpmCFm": { "minDownPayment": null },
+    "Dc14EX4xux5": { "version": "Casa Rodante", "transmission": "No especificado", "fuel": "No especificado", "minDownPayment": null },
+    "DQnfCCJDJb3": { "version": "4 Plazas", "km": 0, "transmission": "No especificado", "fuel": "No especificado", "minDownPayment": null, "status": "POR_CONFIRMAR", "verificationStatus": "POR_CONFIRMAR", "features": ["Solo 49 horas de uso", "4 plazas", "Muchos extras"] },
+    "DQm5t1Ckd29": { "version": "", "km": 0, "transmission": "No especificado", "fuel": "No especificado", "minDownPayment": null, "status": "POR_CONFIRMAR", "verificationStatus": "POR_CONFIRMAR", "features": ["Solo 27 horas de uso", "Con manuales, herramientas y factura"] }
+  }
+}

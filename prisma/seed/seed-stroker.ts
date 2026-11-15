@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from "node:fs";
 import path from "node:path";
 import { db } from "../../src/lib/db";
 import { BUSINESS } from "../../src/lib/business";
+import { applyInstagramReview } from "./apply-instagram-review";
 
 const slugify = (text: string) =>
   text
