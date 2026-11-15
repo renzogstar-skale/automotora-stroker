@@ -32,11 +32,13 @@ interface HeroSectionProps {
   /** Título y bajada configurados en Sistema › Mi Web. */
   title: string;
   subtitle: string;
+  heroImage?: string;
 }
 
 export function HeroSection({
   title,
   subtitle,
+  heroImage,
   vehicles,
   filters,
   onFilterChange,
@@ -121,15 +123,15 @@ export function HeroSection({
 
   return (
     <section className="relative overflow-hidden bg-zinc-950 text-white min-h-[660px] lg:min-h-[720px] flex flex-col justify-between">
-      {/* Fondo cinematográfico con fotografía protagonista del inventario DEMO */}
+      {/* Fondo cinematográfico con fotografía oficial de Automotora Stroker */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
         {/* Imagen de fondo del héroe */}
         <img
-          src="/demo/hero.jpg"
-          alt=""
+          src={heroImage || "/brand/stroker-portada.jpg"}
+          alt="Automotora Stroker Portada"
           fetchPriority="high"
           decoding="async"
-          className="size-full object-cover object-center lg:object-[center_35%] scale-105 opacity-40 brightness-75 contrast-125"
+          className="size-full object-cover object-center lg:object-[center_35%] scale-105 opacity-35 brightness-75 contrast-125"
         />
 
         {/* Gradientes cinematográficos multicapa para máxima legibilidad */}
@@ -173,6 +175,26 @@ export function HeroSection({
         {/* Layout en dos columnas: Titular/Buscador a la izquierda, Ficha destacada a la derecha en escritorio */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           <div className="lg:col-span-8">
+            {/* Emblema Oficial Stroker en Portada */}
+            <div className="flex items-center gap-3.5 mb-5 p-2 pr-4 rounded-2xl bg-zinc-900/50 border border-white/10 backdrop-blur-md w-fit shadow-xl shadow-black/40">
+              <img
+                src="/brand/stroker-emblem.jpg"
+                alt="Automotora Stroker Oficial"
+                className="h-14 sm:h-16 w-auto object-contain rounded-xl border border-red-500/40 shadow-md shadow-red-950/50 hover:scale-105 transition-transform"
+              />
+              <div>
+                <span className="text-[11px] sm:text-xs uppercase tracking-widest font-black text-red-500 block">
+                  Automotora Stroker
+                </span>
+                <span className="text-xs sm:text-sm text-white font-bold block">
+                  Special Cars for Special People
+                </span>
+                <span className="text-[10px] sm:text-[11px] text-zinc-400 block">
+                  Showroom Antofagasta · Despachos a todo Chile
+                </span>
+              </div>
+            </div>
+
             {/* Título grande, elegante y contundente */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
               {title || "Special Cars for Special People"}

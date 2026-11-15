@@ -20,10 +20,10 @@ export const DEFAULTS = {
     status: "PUBLICADO", domain: "autos.stroker.cl", domainStatus: "PENDIENTE_DNS", publishedAt: null as string | null,
     draft: null as WebConfig | null,
     published: {
-      logoText: "Stroker", logoImage: "", accent: "#c8102e", secondary: "#1f2328", branches: {},
+      logoText: "Stroker", logoImage: "/brand/stroker-emblem.jpg", accent: "#c8102e", secondary: "#1f2328", branches: {},
       heroTitle: "Special Cars for Special People",
       heroSubtitle: "Compra, venta y consignación de autos, camionetas y motocicletas en Antofagasta. Conoce nuestro catálogo, consulta por financiamiento a medida y coordina el despacho a cualquier región de Chile.",
-      heroImage: "/demo/hero.jpg",
+      heroImage: "/brand/stroker-portada.jpg",
       aboutText: "En Automotora Stroker nos dedicamos a la compra, venta y consignación de autos, camionetas y motocicletas. Si estás buscando tu próximo vehículo o quieres vender el que ya tienes, contáctanos para conocer las opciones disponibles. Atendemos en Antofagasta y coordinamos despachos a todo Chile.",
       phone: "+56 9 7132 5262", email: "contacto@stroker.cl", whatsapp: "+56 9 7132 5262",
       address: "Av. Jaime Guzmán 4050, Club Pádel Llacolén, Antofagasta, Chile",

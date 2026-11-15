@@ -127,9 +127,12 @@ export function Shell({
   const side = (wide: boolean) => (
     <nav className="flex h-full flex-col select-none">
       <div className="flex h-16 items-center gap-3 px-4 border-b border-white/10">
-        <span className="grid size-9 place-items-center rounded-xl bg-accent font-extrabold text-white shadow-sm shrink-0">
-          S
-        </span>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/brand/stroker-emblem.jpg"
+          alt="Automotora Stroker"
+          className="size-9 rounded-xl object-contain bg-zinc-950 p-0.5 border border-white/10 shadow-sm shrink-0"
+        />
         {wide && (
           <div className="min-w-0">
             <span className="block font-bold tracking-tight text-white leading-none">

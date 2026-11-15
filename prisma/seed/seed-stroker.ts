@@ -170,6 +170,30 @@ export async function seedOfficialStrokerInventory() {
     console.log(`[OK] ${v.stockCode} - ${v.brand} ${v.model} (${v.status})`);
   }
 
+  // 3. Asegurar configuración de marca oficial en Sistema > Mi Web
+  try {
+    const webSetting = await db.setting.findUnique({ where: { key: "web" } });
+    if (webSetting?.value) {
+      const val = webSetting.value as any;
+      val.published = {
+        ...val.published,
+        logoImage: "/brand/stroker-emblem.jpg",
+        heroImage: "/brand/stroker-portada.jpg",
+      };
+      if (val.draft) {
+        val.draft.logoImage = "/brand/stroker-emblem.jpg";
+        val.draft.heroImage = "/brand/stroker-portada.jpg";
+      }
+      await db.setting.update({
+        where: { key: "web" },
+        data: { value: val },
+      });
+      console.log("Configuración de marca oficial actualizada en Sistema > Mi Web");
+    }
+  } catch (err) {
+    console.error("Error setting brand assets:", err);
+  }
+
   console.log(`=== SINCRONIZACIÓN COMPLETADA: ${count} VEHÍCULOS OFICIALES ===`);
   return count;
 }

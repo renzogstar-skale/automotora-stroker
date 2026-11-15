@@ -36,10 +36,12 @@ export function Shell({ site, preview, href, children }: { site: Site; preview: 
       <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
           <Link href={href("/")} className="flex items-center gap-2.5">
-            {cfg.logoImage
-              // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={cfg.logoImage} alt={cfg.logoText} className="h-9 w-auto" />
-              : <span className="grid size-9 place-items-center rounded-lg bg-accent font-bold text-white">{cfg.logoText.charAt(0)}</span>}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={cfg.logoImage || "/brand/stroker-emblem.jpg"}
+              alt={cfg.logoText}
+              className="h-10 w-auto object-contain rounded-lg"
+            />
             <span className="text-lg font-bold tracking-tight">{cfg.logoText}</span>
           </Link>
           <nav className="flex items-center gap-1 text-sm font-medium sm:gap-4">
@@ -54,7 +56,15 @@ export function Shell({ site, preview, href, children }: { site: Site; preview: 
       <footer className="bg-graphite text-white/80">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 py-10 text-sm sm:grid-cols-3 sm:px-6">
           <div>
-            <p className="text-base font-semibold text-white">{cfg.logoText}</p>
+            <div className="flex items-center gap-2.5 mb-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={cfg.logoImage || "/brand/stroker-emblem.jpg"}
+                alt={cfg.logoText}
+                className="h-8 w-auto object-contain rounded-lg bg-black/40 p-0.5 border border-white/10"
+              />
+              <p className="text-base font-semibold text-white">{cfg.logoText}</p>
+            </div>
             <p className="mt-2 text-white/70">{cfg.aboutText}</p>
             <p className="mt-2 text-xs text-white/50">{cfg.address || "Av. Jaime Guzmán 4050, Club Pádel Llacolén, Antofagasta, Chile"}</p>
           </div>

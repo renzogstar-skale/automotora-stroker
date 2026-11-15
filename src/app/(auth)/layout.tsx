@@ -5,16 +5,19 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="relative hidden bg-graphite lg:block overflow-hidden">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/demo/hero.jpg"
+          src="/brand/stroker-portada.jpg"
           alt="Automotora Stroker"
-          className="absolute inset-0 size-full object-cover opacity-40 transition-transform duration-700 hover:scale-105"
+          className="absolute inset-0 size-full object-cover opacity-50 transition-transform duration-700 hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
         
         <div className="absolute top-10 left-10 flex items-center gap-3">
-          <span className="grid size-10 place-items-center rounded-xl bg-accent font-extrabold text-white shadow-md">
-            S
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/brand/stroker-emblem.jpg"
+            alt="Automotora Stroker"
+            className="size-11 rounded-xl object-contain bg-zinc-950 p-1 border border-white/20 shadow-lg"
+          />
           <span className="text-xl font-bold tracking-tight text-white">Automotora Stroker</span>
         </div>
 
@@ -33,9 +36,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <div className="flex items-center justify-center p-6 sm:p-10">
         <div className="w-full max-w-md card p-6 sm:p-8 rounded-2xl shadow-lg border-line">
           <div className="mb-6 flex items-center gap-3">
-            <span className="grid size-10 place-items-center rounded-xl bg-accent font-extrabold text-white shadow-sm">
-              S
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/stroker-emblem.jpg"
+              alt="Automotora Stroker"
+              className="size-11 rounded-xl object-contain bg-zinc-950 p-1 border border-white/10 shadow-sm"
+            />
             <div>
               <span className="text-lg font-bold text-ink">Automotora Stroker</span>
               <span className="block text-xs font-medium text-muted">Panel Privado de Gestión</span>

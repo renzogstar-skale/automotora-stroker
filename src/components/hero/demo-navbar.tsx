@@ -72,9 +72,12 @@ export function DemoNavbar({ actor }: DemoNavbarProps) {
             href="/"
             className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-lg p-1"
           >
-            <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-[#E01438] to-[#990A21] font-extrabold text-white shadow-md shadow-red-900/40 group-hover:scale-105 transition-transform duration-200">
-              S
-            </span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/brand/stroker-emblem.jpg"
+              alt="Automotora Stroker"
+              className="h-10 sm:h-12 w-auto object-contain rounded-lg shadow-md group-hover:scale-105 transition-transform duration-200"
+            />
             <div className="flex flex-col">
               <div className="flex items-center gap-2">
                 <span className="text-lg sm:text-xl font-black tracking-tight text-white group-hover:text-red-400 transition-colors">

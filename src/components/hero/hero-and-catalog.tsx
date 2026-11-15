@@ -15,6 +15,7 @@ interface HeroAndCatalogProps {
   branches: DemoBranch[];
   heroTitle: string;
   heroSubtitle: string;
+  heroImage?: string;
 }
 
 const DEFAULT_FILTERS: HeroFilterState = {
@@ -31,7 +32,7 @@ const DEFAULT_FILTERS: HeroFilterState = {
   orden: "destacados",
 };
 
-export function HeroAndCatalog({ initialVehicles, branches, heroTitle, heroSubtitle }: HeroAndCatalogProps) {
+export function HeroAndCatalog({ initialVehicles, branches, heroTitle, heroSubtitle, heroImage }: HeroAndCatalogProps) {
   // Filtros iniciales desde la URL (enlaces compartidos); la página es dinámica, así servidor y cliente coinciden.
   const params = useSearchParams();
   const [filters, setFilters] = useState<HeroFilterState>(() => ({
@@ -162,6 +163,7 @@ export function HeroAndCatalog({ initialVehicles, branches, heroTitle, heroSubti
       <HeroSection
         title={heroTitle}
         subtitle={heroSubtitle}
+        heroImage={heroImage}
         vehicles={initialVehicles}
         branches={branches}
         filters={filters}

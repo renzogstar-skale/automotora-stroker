@@ -87,7 +87,13 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
 
       <main className="flex-1">
         {/* HERO SECTION PREMIUM + BUSCADOR + VITRINA + SUCURSALES + MODAL */}
-        <HeroAndCatalog initialVehicles={vehicles} branches={branches} heroTitle={cfg.heroTitle} heroSubtitle={cfg.heroSubtitle} />
+        <HeroAndCatalog
+          initialVehicles={vehicles}
+          branches={branches}
+          heroTitle={cfg.heroTitle}
+          heroSubtitle={cfg.heroSubtitle}
+          heroImage={cfg.heroImage || "/brand/stroker-portada.jpg"}
+        />
 
       </main>
 
@@ -98,9 +104,12 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
             {/* Columna Marca */}
             <div className="md:col-span-5 space-y-3">
               <div className="flex items-center gap-3">
-                <span className="grid size-8 place-items-center rounded-xl bg-accent text-xs font-bold text-white shadow-sm">
-                  S
-                </span>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={cfg.logoImage || "/brand/stroker-emblem.jpg"}
+                  alt="Automotora Stroker"
+                  className="size-10 rounded-xl object-contain bg-zinc-950 p-1 border border-white/10 shadow-sm shrink-0"
+                />
                 <div>
                   <span className="font-extrabold text-sm text-ink block">Automotora Stroker SpA</span>
                   <span className="text-muted/70 text-[11px]">Special Cars for Special People</span>
