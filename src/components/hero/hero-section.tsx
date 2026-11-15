@@ -1,24 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import {
   Car,
-  Calendar,
   Search,
   Sparkles,
-  ArrowRight,
-  ShieldCheck,
-  Check,
   FilterX,
-  Gauge,
-  MapPin,
-  ChevronRight,
   MessageCircle,
 } from "lucide-react";
-import { clp } from "@/lib/format";
-import { BUSINESS, DEMO_INVENTORY, waUrl } from "@/lib/business";
+import { waUrl } from "@/lib/business";
 import type { DemoVehicle, DemoBranch, HeroFilterState } from "@/types/hero-demo";
+import { HeroFeaturedCarousel } from "./hero-featured-carousel";
 
 interface HeroSectionProps {
   vehicles: DemoVehicle[];
@@ -114,13 +106,6 @@ export function HeroSection({
     }
   };
 
-  // Mostrar únicamente unidades disponibles y verificadas como protagonista
-  const heroVehicle =
-    (featuredVehicle && featuredVehicle.status === "DISPONIBLE" ? featuredVehicle : null) ||
-    vehicles.find((v) => v.featured && v.status === "DISPONIBLE" && v.verificationStatus !== "POR_CONFIRMAR") ||
-    vehicles.find((v) => v.status === "DISPONIBLE" && v.verificationStatus !== "POR_CONFIRMAR") ||
-    vehicles[0];
-
   return (
     <section className="relative overflow-hidden bg-zinc-950 text-white min-h-[660px] lg:min-h-[720px] flex flex-col justify-between">
       {/* Fondo cinematográfico con fotografía oficial de Automotora Stroker */}
@@ -214,59 +199,14 @@ export function HeroSection({
             </div>
           </div>
 
-          {/* Tarjeta destacada de vehículo protagonista en escritorio */}
-          {heroVehicle && (
-            <div className="hidden lg:block lg:col-span-4">
-              <div className="group relative rounded-2xl border border-white/15 bg-zinc-900/60 backdrop-blur-xl p-4.5 shadow-2xl transition-all duration-300 hover:border-red-500/40 hover:bg-zinc-900/80">
-                <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-zinc-800">
-                  <img
-                    src={heroVehicle.photos[0]?.url || "/demo/ford-ranger-1.jpg"}
-                    alt={`${heroVehicle.brand} ${heroVehicle.model}`}
-                    className="size-full object-cover transition-transform duration-500 group-hover:scale-105"
-                  />
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5 rounded-lg bg-black/75 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
-                    <span className="size-1.5 rounded-full bg-emerald-400" />
-                    <span>Destacado</span>
-                  </div>
-                  <div className="absolute bottom-2.5 right-2.5 rounded-lg bg-zinc-950/80 px-2.5 py-0.5 text-xs font-semibold text-zinc-300 backdrop-blur-sm">
-                    {BUSINESS.city}
-                  </div>
-                </div>
-
-                <div className="mt-3.5 flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="font-extrabold text-base text-white group-hover:text-red-400 transition-colors">
-                      {heroVehicle.brand} {heroVehicle.model}
-                    </h3>
-                    <p className="text-xs text-zinc-400 font-medium">
-                      {heroVehicle.version} · {heroVehicle.year}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-base font-black text-red-400 tabular-nums">
-                      {clp(heroVehicle.price)}
-                    </p>
-                    <span className="text-[10px] text-zinc-400 font-semibold">
-                      Precio publicado
-                    </span>
-                  </div>
-                </div>
-
-                <div className="mt-3.5 pt-3 border-t border-white/10 flex items-center justify-between text-xs">
-                  <span className="text-zinc-400 font-medium flex items-center gap-1">
-                    <MapPin className="size-3.5 text-red-500" /> {BUSINESS.showroom}
-                  </span>
-                  <button
-                    onClick={() => onOpenAppointmentModal(heroVehicle.id, heroVehicle.branchId)}
-                    className="font-bold text-red-400 hover:text-red-300 inline-flex min-h-11 items-center gap-1 cursor-pointer"
-                  >
-                    <span>Agendar visita</span>
-                    <ChevronRight className="size-3.5" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Tarjeta carrusel automático de vehículos destacados */}
+          <div className="w-full lg:col-span-4 mt-6 lg:mt-0">
+            <HeroFeaturedCarousel
+              vehicles={vehicles}
+              featuredVehicle={featuredVehicle}
+              onOpenAppointmentModal={onOpenAppointmentModal}
+            />
+          </div>
         </div>
 
         {/* 3. BUSCADOR INTELIGENTE */}
