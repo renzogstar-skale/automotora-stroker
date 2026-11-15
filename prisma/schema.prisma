@@ -1,0 +1,914 @@
+// Automotora Stroker: modelo de datos compartido por panel, vitrina, reportes e integraciones.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  GERENCIA
+  VENDEDOR
+  FINANZAS
+  FOTOGRAFO
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  code      String   @unique
+  name      String
+  address   String
+  comuna    String
+  region    String
+  phone     String
+  whatsapp  String
+  hours     Json
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  users         UserBranch[]
+  sellers       Seller[]
+  vehicles      Vehicle[]
+  opportunities Opportunity[]
+  appointments  Appointment[]
+  sales         Sale[]
+  movements     Movement[]
+  apiKeys       ApiKey[]
+  waNumbers     WaNumber[]
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String?
+  role         Role
+  active       Boolean   @default(true)
+  canPublish   Boolean   @default(false)
+  lastSeenAt   DateTime?
+  createdAt    DateTime  @default(now())
+
+  branches       UserBranch[]
+  seller         Seller?
+  sessions       Session[]
+  tokens         AuthToken[]
+  auditLogs      AuditLog[]
+  tasks          Task[]
+  conversations  Conversation[]
+  socialAccounts SocialAccount[]
+}
+
+model UserBranch {
+  userId   String
+  branchId String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  branch   Branch @relation(fields: [branchId], references: [id])
+
+  @@id([userId, branchId])
+}
+
+model Session {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+}
+
+enum TokenKind {
+  INVITE
+  RESET
+}
+
+model AuthToken {
+  id        String    @id @default(cuid())
+  kind      TokenKind
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+/// Correo simulado (bandeja de desarrollo). En producción se envía con el proveedor configurado.
+model EmailOutbox {
+  id        String   @id @default(cuid())
+  to        String
+  subject   String
+  body      String
+  createdAt DateTime @default(now())
+}
+
+model Setting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id])
+  actorName String
+  action    String
+  entity    String
+  entityId  String
+  summary   String
+  data      Json?
+  createdAt DateTime @default(now())
+
+  @@index([entity, entityId])
+  @@index([createdAt])
+}
+
+model Seller {
+  id          String   @id @default(cuid())
+  userId      String?  @unique
+  user        User?    @relation(fields: [userId], references: [id])
+  name        String
+  email       String
+  phone       String
+  branchId    String
+  branch      Branch   @relation(fields: [branchId], references: [id])
+  active      Boolean  @default(true)
+  monthlyGoal Int      @default(5)
+  createdAt   DateTime @default(now())
+
+  opportunities Opportunity[]
+  appointments  Appointment[]
+  sales         Sale[]
+  reservations  Reservation[]
+  consignments  Consignment[]
+  dailyReports  DailyReport[]
+  commissions   SaleCommission[]
+}
+
+model Contact {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  rut       String?
+  region    String?
+  comuna    String?
+  createdAt DateTime @default(now())
+
+  opportunities Opportunity[]
+  appointments  Appointment[]
+  consignments  Consignment[]
+  sales         Sale[]
+  reservations  Reservation[]
+  activities    Activity[]
+
+  @@index([phone])
+  @@index([email])
+}
+
+enum OppType {
+  VENTA
+  CONSIGNACION
+  PISO
+}
+
+enum Stage {
+  NUEVO
+  NO_CONTESTA
+  SEGUIMIENTO
+  BUSCANDO
+  EN_ESPERA
+  NEGOCIANDO
+  AGENDADO
+  PARA_CIERRE
+  CONCRETADO
+  CANCELADO
+}
+
+enum Source {
+  WEB
+  WHATSAPP
+  TELEFONO
+  REDES
+  REFERIDO
+  PRESENCIAL
+  N8N
+}
+
+enum PayMethod {
+  CONTADO
+  FINANCIAMIENTO
+  PARTE_PAGO
+}
+
+model Opportunity {
+  id             String     @id @default(cuid())
+  type           OppType    @default(VENTA)
+  stage          Stage      @default(NUEVO)
+  source         Source
+  contactId      String
+  contact        Contact    @relation(fields: [contactId], references: [id])
+  sellerId       String?
+  seller         Seller?    @relation(fields: [sellerId], references: [id])
+  branchId       String
+  branch         Branch     @relation(fields: [branchId], references: [id])
+  vehicleId      String?
+  vehicle        Vehicle?   @relation(fields: [vehicleId], references: [id])
+  interest       String?
+  budget         Int?
+  payMethod      PayMethod?
+  tradeIn        String?
+  nextFollowUpAt DateTime?
+  cancelReason   String?
+  externalId     String?
+  stageChangedAt DateTime   @default(now())
+  closedAt       DateTime?
+  createdAt      DateTime   @default(now())
+  deletedAt      DateTime?
+  deletedById    String?
+
+  activities    Activity[]
+  stageHistory  StageChange[]
+  appointments  Appointment[]
+  reservations  Reservation[]
+  sales         Sale[]
+  conversations Conversation[]
+  simulations   FinancingSimulation[]
+  appraisals    Appraisal[]
+  tasks         Task[]
+
+  @@unique([branchId, externalId])
+  @@index([stage])
+  @@index([createdAt])
+}
+
+model StageChange {
+  id            String      @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  from          Stage?
+  to            Stage
+  reason        String?
+  userId        String?
+  createdAt     DateTime    @default(now())
+}
+
+enum ActivityType {
+  LLAMADA
+  NOTA
+  MENSAJE
+  CITA
+  ETAPA
+  SISTEMA
+}
+
+model Activity {
+  id            String       @id @default(cuid())
+  type          ActivityType
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  contactId     String?
+  contact       Contact?     @relation(fields: [contactId], references: [id])
+  body          String
+  outcome       String?
+  userId        String?
+  userName      String?
+  createdAt     DateTime     @default(now())
+
+  @@index([opportunityId])
+}
+
+model Task {
+  id            String       @id @default(cuid())
+  title         String
+  dueAt         DateTime
+  assignedToId  String
+  assignedTo    User         @relation(fields: [assignedToId], references: [id])
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  doneAt        DateTime?
+  createdAt     DateTime     @default(now())
+}
+
+enum ApptType {
+  TEST_DRIVE
+  REUNION
+  ENTREGA
+  SERVICIO
+}
+
+enum ApptStatus {
+  PROGRAMADA
+  CONFIRMADA
+  COMPLETADA
+  CANCELADA
+}
+
+model Appointment {
+  id            String       @id @default(cuid())
+  type          ApptType
+  status        ApptStatus   @default(PROGRAMADA)
+  startAt       DateTime
+  endAt         DateTime
+  contactId     String?
+  contact       Contact?     @relation(fields: [contactId], references: [id])
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  sellerId      String?
+  seller        Seller?      @relation(fields: [sellerId], references: [id])
+  branchId      String
+  branch        Branch       @relation(fields: [branchId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle?     @relation(fields: [vehicleId], references: [id])
+  notes         String?
+  cancelReason  String?
+  rescheduled   Int          @default(0)
+  externalId    String?
+  googleEventId String?
+  createdAt     DateTime     @default(now())
+
+  @@unique([branchId, externalId])
+  @@index([startAt])
+}
+
+model DailyReport {
+  id               String    @id @default(cuid())
+  sellerId         String
+  seller           Seller    @relation(fields: [sellerId], references: [id])
+  date             DateTime  @db.Date
+  status           String    @default("BORRADOR")
+  calls            Json      @default("[]")
+  consignmentCalls Json      @default("[]")
+  creditsEntered   Int       @default(0)
+  publications     Int       @default(0)
+  notes            String?
+  submittedAt      DateTime?
+  updatedAt        DateTime  @updatedAt
+
+  @@unique([sellerId, date])
+}
+
+enum WaProvider {
+  META
+  YCLOUD
+}
+
+model WaNumber {
+  id            String         @id @default(cuid())
+  phone         String         @unique
+  label         String
+  provider      WaProvider
+  branchId      String
+  branch        Branch         @relation(fields: [branchId], references: [id])
+  status        String         @default("DEMO")
+  conversations Conversation[]
+}
+
+model Conversation {
+  id            String       @id @default(cuid())
+  numberId      String
+  number        WaNumber     @relation(fields: [numberId], references: [id])
+  contactPhone  String
+  contactName   String
+  assignedToId  String?
+  assignedTo    User?        @relation(fields: [assignedToId], references: [id])
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  unread        Int          @default(0)
+  lastMessageAt DateTime     @default(now())
+  messages      WaMessage[]
+
+  @@unique([numberId, contactPhone])
+}
+
+model WaMessage {
+  id                String       @id @default(cuid())
+  conversationId    String
+  conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  direction         String
+  body              String
+  /// Único: evita registrar dos veces el mismo mensaje recibido por webhook.
+  providerMessageId String       @unique
+  /// Clave del envío desde el panel: un reintento con la misma clave no vuelve a enviar.
+  clientKey         String?      @unique
+  sentAt            DateTime     @default(now())
+  status            String       @default("ENTREGADO")
+}
+
+enum Condition {
+  NUEVO
+  USADO
+}
+
+enum Ownership {
+  PROPIO
+  CONSIGNADO
+}
+
+enum VehicleStatus {
+  DISPONIBLE
+  RESERVADO
+  VENDIDO
+  RETIRADO
+}
+
+model Vehicle {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  branchId     String
+  branch       Branch        @relation(fields: [branchId], references: [id])
+  brand        String
+  model        String
+  version      String
+  year         Int
+  plate        String        @unique
+  vin          String?
+  km           Int
+  transmission String
+  fuel         String
+  bodyType     String
+  color        String
+  condition    Condition     @default(USADO)
+  ownership    Ownership     @default(PROPIO)
+  status       VehicleStatus @default(DISPONIBLE)
+  price        Int
+  /// Propio: costo de adquisición. Consignado: monto acordado a liquidar al propietario.
+  cost         Int
+  description  String?
+  stockSince   DateTime      @default(now())
+  published    Boolean       @default(false)
+  publishedAt  DateTime?
+  featured     Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+
+  photos        VehiclePhoto[]
+  consignment   Consignment?
+  opportunities Opportunity[]
+  appointments  Appointment[]
+  reservations  Reservation[]
+  sales         Sale[]
+  movements     Movement[]
+  documents     Document[]
+  webEvents     WebEvent[]
+  socialPosts   SocialPost[]
+  appraisals    Appraisal[]
+
+  @@index([status])
+}
+
+model VehiclePhoto {
+  id        String   @id @default(cuid())
+  vehicleId String
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  url       String
+  order     Int
+  isCover   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+enum ConsModality {
+  FISICA
+  ONLINE
+}
+
+enum ConsStatus {
+  VIGENTE
+  VENDIDA
+  RETIRADA
+  CERRADA
+}
+
+model Consignment {
+  id            String       @id @default(cuid())
+  ownerId       String
+  owner         Contact      @relation(fields: [ownerId], references: [id])
+  vehicleId     String       @unique
+  vehicle       Vehicle      @relation(fields: [vehicleId], references: [id])
+  modality      ConsModality
+  /// Monto neto a liquidar al propietario cuando se vende.
+  agreedPrice   Int
+  commission    Int
+  startDate     DateTime
+  endDate       DateTime
+  status        ConsStatus   @default(VIGENTE)
+  documents     Json         @default("{}")
+  responsibleId String?
+  responsible   Seller?      @relation(fields: [responsibleId], references: [id])
+  appraisalId   String?      @unique
+  appraisal     Appraisal?   @relation(fields: [appraisalId], references: [id])
+  closedAt      DateTime?
+  createdAt     DateTime     @default(now())
+
+  payouts         OwnerPayout[]
+  documentsIssued Document[]
+}
+
+model OwnerPayout {
+  id             String      @id @default(cuid())
+  consignmentId  String
+  consignment    Consignment @relation(fields: [consignmentId], references: [id])
+  amount         Int
+  paidAt         DateTime
+  idempotencyKey String      @unique
+  movement       Movement?
+  createdAt      DateTime    @default(now())
+}
+
+model Appraisal {
+  id            String       @id @default(cuid())
+  plate         String
+  kind          String
+  brand         String
+  model         String
+  version       String?
+  year          Int
+  km            Int
+  condition     String
+  minValue      Int
+  maxValue      Int
+  suggested     Int
+  source        String
+  sourceDate    DateTime
+  isDemo        Boolean      @default(false)
+  manual        Boolean      @default(false)
+  notes         String?
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  vehicleId     String?
+  vehicle       Vehicle?     @relation(fields: [vehicleId], references: [id])
+  consignment   Consignment?
+  createdById   String?
+  createdAt     DateTime     @default(now())
+}
+
+enum ResStatus {
+  ACTIVA
+  CONVERTIDA
+  EXPIRADA
+  ANULADA
+}
+
+model Reservation {
+  id            String       @id @default(cuid())
+  vehicleId     String
+  vehicle       Vehicle      @relation(fields: [vehicleId], references: [id])
+  opportunityId String?
+  opportunity   Opportunity? @relation(fields: [opportunityId], references: [id])
+  contactId     String
+  contact       Contact      @relation(fields: [contactId], references: [id])
+  sellerId      String?
+  seller        Seller?      @relation(fields: [sellerId], references: [id])
+  amount        Int
+  status        ResStatus    @default(ACTIVA)
+  expiresAt     DateTime
+  saleId        String?
+  createdAt     DateTime     @default(now())
+  endedAt       DateTime?
+  endReason     String?
+
+  payments  Payment[]
+  documents Document[]
+}
+
+enum SaleStatus {
+  CONFIRMADA
+  ANULADA
+}
+
+enum Delivery {
+  PENDIENTE
+  PROGRAMADA
+  ENTREGADA
+}
+
+model Sale {
+  id             String        @id @default(cuid())
+  number         Int           @unique @default(autoincrement())
+  vehicleId      String
+  vehicle        Vehicle       @relation(fields: [vehicleId], references: [id])
+  opportunityId  String?
+  opportunity    Opportunity?  @relation(fields: [opportunityId], references: [id])
+  contactId      String
+  contact        Contact       @relation(fields: [contactId], references: [id])
+  sellerId       String
+  seller         Seller        @relation(fields: [sellerId], references: [id])
+  branchId       String
+  branch         Branch        @relation(fields: [branchId], references: [id])
+  ownership      Ownership
+  consModality   ConsModality?
+  listPrice      Int
+  discount       Int           @default(0)
+  finalPrice     Int
+  /// Propio: costo de adquisición. Consignado: monto a liquidar al propietario.
+  costBasis      Int
+  prepCost       Int           @default(0)
+  extraIncome    Int           @default(0)
+  creditIncome   Int           @default(0)
+  payMethod      PayMethod
+  financedAmount Int           @default(0)
+  tradeInValue   Int           @default(0)
+  balanceDueAt   DateTime?
+  saleDate       DateTime
+  status         SaleStatus    @default(CONFIRMADA)
+  delivery       Delivery      @default(PENDIENTE)
+  deliveredAt    DateTime?
+  referredBy     String?
+  annulledAt     DateTime?
+  annulReason    String?
+  /// Clave del formulario de confirmación: un reintento devuelve la misma venta.
+  idempotencyKey String?       @unique
+  createdAt      DateTime      @default(now())
+
+  bookEntry   SalesBookEntry?
+  payments    Payment[]
+  commissions SaleCommission[]
+  movements   Movement[]
+  documents   Document[]
+
+  @@index([saleDate])
+}
+
+model Payment {
+  id             String       @id @default(cuid())
+  saleId         String?
+  sale           Sale?        @relation(fields: [saleId], references: [id])
+  reservationId  String?
+  reservation    Reservation? @relation(fields: [reservationId], references: [id])
+  amount         Int
+  method         String
+  paidAt         DateTime
+  status         String       @default("REGISTRADO")
+  /// Único: un reintento con la misma clave no duplica el pago.
+  idempotencyKey String       @unique
+  reversedAt     DateTime?
+  reverseReason  String?
+  createdAt      DateTime     @default(now())
+
+  movements Movement[]
+}
+
+model CommissionRule {
+  id              String    @id @default(cuid())
+  name            String
+  beneficiary     String
+  beneficiaryName String?
+  kind            String
+  value           Float
+  base            String
+  appliesTo       String
+  order           Int
+  validFrom       DateTime
+  validTo         DateTime?
+  active          Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+}
+
+model SaleCommission {
+  id          String    @id @default(cuid())
+  saleId      String
+  sale        Sale      @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  ruleId      String
+  rule        Json
+  beneficiary String
+  sellerId    String?
+  seller      Seller?   @relation(fields: [sellerId], references: [id])
+  baseLabel   String
+  baseAmount  Int
+  amount      Int
+  order       Int
+  paidAt      DateTime?
+}
+
+model Partner {
+  id        String     @id @default(cuid())
+  name      String
+  active    Boolean    @default(true)
+  movements Movement[]
+}
+
+model Category {
+  id        String     @id @default(cuid())
+  name      String     @unique
+  type      String
+  /// true: afecta la utilidad del período. false: solo caja (inventario, aportes, cobros, liquidaciones).
+  pnl       Boolean
+  system    Boolean    @default(false)
+  movements Movement[]
+}
+
+model Movement {
+  id           String       @id @default(cuid())
+  date         DateTime
+  type         String
+  categoryId   String
+  category     Category     @relation(fields: [categoryId], references: [id])
+  amount       Int
+  description  String
+  tags         String[]
+  scope        String       @default("EMPRESA")
+  partnerId    String?
+  partner      Partner?     @relation(fields: [partnerId], references: [id])
+  branchId     String?
+  branch       Branch?      @relation(fields: [branchId], references: [id])
+  saleId       String?
+  sale         Sale?        @relation(fields: [saleId], references: [id])
+  vehicleId    String?
+  vehicle      Vehicle?     @relation(fields: [vehicleId], references: [id])
+  paymentId    String?
+  payment      Payment?     @relation(fields: [paymentId], references: [id])
+  payoutId     String?      @unique
+  payout       OwnerPayout? @relation(fields: [payoutId], references: [id])
+  isPending    Boolean      @default(false)
+  dueDate      DateTime?
+  pozo         Boolean      @default(false)
+  refund       Boolean      @default(false)
+  reversalOfId String?      @unique
+  reversalOf   Movement?    @relation("Reversal", fields: [reversalOfId], references: [id])
+  reversedBy   Movement?    @relation("Reversal")
+  createdById  String?
+  createdAt    DateTime     @default(now())
+
+  /// Un pago genera su movimiento de caja (y su eventual reverso, de tipo opuesto) una sola vez.
+  @@unique([paymentId, type])
+  @@index([date])
+}
+
+model FinancingSimulation {
+  id            String      @id @default(cuid())
+  opportunityId String
+  opportunity   Opportunity @relation(fields: [opportunityId], references: [id], onDelete: Cascade)
+  inputs        Json
+  result        Json
+  createdBy     String
+  createdAt     DateTime    @default(now())
+}
+
+model DocumentTemplate {
+  id        String                    @id @default(cuid())
+  type      String
+  name      String
+  version   Int                       @default(1)
+  body      String
+  active    Boolean                   @default(true)
+  updatedAt DateTime                  @updatedAt
+  versions  DocumentTemplateVersion[]
+}
+
+model DocumentTemplateVersion {
+  id         String           @id @default(cuid())
+  templateId String
+  template   DocumentTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  version    Int
+  body       String
+  createdAt  DateTime         @default(now())
+
+  @@unique([templateId, version])
+}
+
+model FolioCounter {
+  key  String @id
+  last Int
+}
+
+model Document {
+  id              String       @id @default(cuid())
+  folio           String       @unique
+  type            String
+  status          String       @default("BORRADOR")
+  templateId      String
+  templateVersion Int
+  bodySnapshot    String?
+  data            Json
+  vehicleId       String?
+  vehicle         Vehicle?     @relation(fields: [vehicleId], references: [id])
+  saleId          String?
+  sale            Sale?        @relation(fields: [saleId], references: [id])
+  reservationId   String?
+  reservation     Reservation? @relation(fields: [reservationId], references: [id])
+  consignmentId   String?
+  consignment     Consignment? @relation(fields: [consignmentId], references: [id])
+  clientName      String?
+  plate           String?
+  branchId        String?
+  createdById     String
+  emittedAt       DateTime?
+  templateName    String?
+  pdfPath         String?
+  pdfSha256       String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@index([type, status])
+  @@index([plate])
+  @@index([vehicleId])
+}
+
+model WebEvent {
+  id        String   @id @default(cuid())
+  type      String
+  path      String
+  vehicleId String?
+  vehicle   Vehicle? @relation(fields: [vehicleId], references: [id])
+  visitor   String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model FormSubmission {
+  id            String   @id @default(cuid())
+  kind          String
+  dedupeHash    String   @unique
+  payload       Json
+  opportunityId String?
+  createdAt     DateTime @default(now())
+}
+
+model SocialAccount {
+  id      String       @id @default(cuid())
+  network String
+  kind    String
+  handle  String
+  userId  String?
+  user    User?        @relation(fields: [userId], references: [id])
+  status  String       @default("DEMO")
+  posts   SocialPost[]
+}
+
+model SocialPost {
+  id          String        @id @default(cuid())
+  accountId   String
+  account     SocialAccount @relation(fields: [accountId], references: [id])
+  vehicleId   String?
+  vehicle     Vehicle?      @relation(fields: [vehicleId], references: [id])
+  text        String
+  status      String
+  scheduledAt DateTime?
+  publishedAt DateTime?
+  error       String?
+  createdAt   DateTime      @default(now())
+}
+
+model Integration {
+  key        String    @id
+  status     String    @default("SIN_CONFIGURAR")
+  config     Json      @default("{}")
+  lastSyncAt DateTime?
+  lastError  String?
+  updatedAt  DateTime  @updatedAt
+}
+
+model ApiKey {
+  id          String      @id @default(cuid())
+  name        String
+  branchId    String
+  branch      Branch      @relation(fields: [branchId], references: [id])
+  prefix      String
+  hash        String      @unique
+  permissions String[]
+  createdAt   DateTime    @default(now())
+  createdBy   String
+  revokedAt   DateTime?
+  lastUsedAt  DateTime?
+  logs        IngestLog[]
+}
+
+model IngestLog {
+  id        String   @id @default(cuid())
+  apiKeyId  String?
+  apiKey    ApiKey?  @relation(fields: [apiKeyId], references: [id])
+  endpoint  String
+  status    Int
+  result    String
+  createdAt DateTime @default(now())
+
+  @@index([apiKeyId, createdAt])
+}
+
+model IdempotencyRecord {
+  key       String   @id
+  /// Hash del cuerpo: la misma Idempotency-Key con otro cuerpo se rechaza (422).
+  requestHash String?
+  status    Int
+  response  Json
+  createdAt DateTime @default(now())
+}
+
+/// Asiento del Libro de Ventas: se crea en la misma transacción que confirma la venta.
+/// `snapshot` congela los campos ingresados al cierre; los calculados se derivan de la venta (economics.ts).
+model SalesBookEntry {
+  id           String    @id @default(cuid())
+  number       Int       @unique @default(autoincrement())
+  saleId       String    @unique
+  sale         Sale      @relation(fields: [saleId], references: [id])
+  entryDate    DateTime
+  status       String    @default("VIGENTE")
+  snapshot     Json
+  annulledAt   DateTime?
+  annulReason  String?
+  createdAt    DateTime  @default(now())
+}

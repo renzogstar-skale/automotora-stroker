@@ -1,26 +1,198 @@
 @import "tailwindcss";
-
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-graphite: var(--graphite);
+  --color-accent: var(--accent);
+  --color-accent-soft: var(--accent-soft);
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+:root {
+  /* Identidad visual Stroker - Paleta Automotriz Premium */
+  --bg: #F8F9FA;              /* Fondo blanco suave prémium */
+  --surface: #FFFFFF;         /* Superficie de tarjetas */
+  --surface-2: #F1F3F5;       /* Superficie secundaria / hovers */
+  --line: #E5E7EB;            /* Bordes limpios y sutiles */
+  --ink: #111827;             /* Texto principal de alto contraste */
+  --muted: #4B5563;           /* Texto secundario accesible WCAG AA */
+  --graphite: #1A1A1A;        /* Grafito Stroker */
+  --accent: #C8102E;          /* Rojo Stroker institucional */
+  --accent-soft: rgba(200, 16, 46, 0.08); /* Acento suave transparente */
+  
+  /* Sombras prémium */
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow-card: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 10px 20px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+
+  color-scheme: light;
+}
+
+.dark {
+  /* Modo oscuro de alta gama */
+  --bg: #171717;              /* Fondo oscuro profundo */
+  --surface: #1E1E1E;         /* Superficie de tarjetas */
+  --surface-2: #262626;       /* Superficie secundaria / hovers */
+  --line: #2E2E2E;            /* Bordes en modo oscuro */
+  --ink: #F9FAFB;             /* Texto blanco nítido */
+  --muted: #9CA3AF;           /* Texto secundario en modo oscuro */
+  --graphite: #0E0E0E;        /* Grafito oscuro */
+  --accent-soft: rgba(200, 16, 46, 0.18);
+
+  --shadow-subtle: 0 1px 2px 0 rgba(0, 0, 0, 0.25);
+  --shadow-card: 0 2px 4px 0 rgba(0, 0, 0, 0.35);
+  --shadow-hover: 0 12px 24px -4px rgba(0, 0, 0, 0.5);
+
+  color-scheme: dark;
+}
+
+html, body {
+  background-color: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Transiciones globales fluidas (180ms - 250ms) */
+* {
+  border-color: var(--line);
+}
+
+@layer components {
+  /* Tarjetas unificadas con esquinas 12-16px */
+  .card {
+    @apply rounded-xl border border-line bg-surface transition-all duration-200 ease-in-out;
+    box-shadow: var(--shadow-card);
+  }
+  .card-hover {
+    @apply hover:-translate-y-0.5;
+    box-shadow: var(--shadow-card);
+  }
+  .card-hover:hover {
+    box-shadow: var(--shadow-hover);
+  }
+
+  /* Botones consistentes: altura 40px (h-10) y compacto 32px (h-8) */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-line bg-surface px-4 h-10 text-sm font-semibold text-ink transition-all duration-200 ease-in-out hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 active:scale-[0.99] disabled:opacity-50 disabled:pointer-events-none whitespace-nowrap;
+  }
+  
+  .btn-primary {
+    @apply border-transparent bg-accent text-white hover:bg-[#b00d27] active:bg-[#990a21] shadow-sm;
+  }
+  
+  .btn-dark {
+    @apply border-transparent bg-graphite text-white hover:bg-black/90 active:bg-black shadow-sm dark:bg-surface-2 dark:hover:bg-white/10;
+  }
+  
+  .btn-ghost {
+    @apply border-transparent bg-transparent hover:bg-surface-2 active:bg-surface-2/80;
+  }
+  
+  .btn-danger {
+    @apply border-red-200 bg-red-50 text-red-700 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-400 dark:hover:bg-red-900/60;
+  }
+  
+  .btn-sm {
+    @apply h-8 px-3 rounded-lg text-xs font-medium gap-1.5;
+  }
+
+  /* Campos de entrada con altura 40px (h-10) y borde 12px */
+  .input {
+    @apply h-10 w-full rounded-xl border border-line bg-surface px-3.5 text-sm text-ink placeholder:text-muted/60 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent;
+  }
+  textarea.input {
+    @apply h-auto py-2.5;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-semibold text-muted tracking-wide;
+  }
+
+  /* Tablas unificadas */
+  .tbl {
+    @apply w-full text-sm border-collapse;
+  }
+  .tbl th {
+    @apply sticky top-0 bg-surface-2/90 backdrop-blur px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted whitespace-nowrap border-b border-line;
+  }
+  .tbl td {
+    @apply px-4 py-3 border-b border-line align-middle text-ink transition-colors duration-150;
+  }
+  .tbl tr:last-child td {
+    @apply border-b-0;
+  }
+  .tbl tbody tr:hover td {
+    @apply bg-surface-2/60;
+  }
+
+  .num {
+    @apply text-right tabular-nums whitespace-nowrap font-medium;
+  }
+  .link {
+    @apply text-accent font-medium hover:underline transition-colors duration-180;
+  }
+
+  /* Contenedores con ancho máximo de 1280px */
+  .max-container {
+    @apply mx-auto w-full max-w-[1280px] px-4 sm:px-6 lg:px-8;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Efecto de Skeleton Loading Shimmer para el catálogo */
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+  background-color: var(--surface-2);
+}
+
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.08) 20%,
+    rgba(255, 255, 255, 0.22) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+/* Soporte estricto para accesibilidad: prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton-shimmer::after {
+    animation: none !important;
+  }
 }

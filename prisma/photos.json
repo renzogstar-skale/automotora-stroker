@@ -1,0 +1,52 @@
+{
+ "Peugeot 2008": [
+  "/demo/peugeot-2008-1.jpg",
+  "/demo/peugeot-2008-2.jpg",
+  "/demo/peugeot-2008-3.jpg"
+ ],
+ "Peugeot 208": [
+  "/demo/peugeot-208-1.jpg",
+  "/demo/peugeot-208-2.jpg",
+  "/demo/peugeot-208-3.jpg"
+ ],
+ "Volkswagen Tiguan": [
+  "/demo/volkswagen-tiguan-1.jpg",
+  "/demo/volkswagen-tiguan-2.jpg",
+  "/demo/volkswagen-tiguan-3.jpg"
+ ],
+ "Subaru Forester": [
+  "/demo/subaru-forester-1.jpg",
+  "/demo/subaru-forester-2.jpg",
+  "/demo/subaru-forester-3.jpg"
+ ],
+ "Ford Ranger": [
+  "/demo/ford-ranger-1.jpg",
+  "/demo/ford-ranger-2.jpg",
+  "/demo/ford-ranger-3.jpg"
+ ],
+ "MG ZS": [
+  "/demo/mg-zs-1.jpg",
+  "/demo/mg-zs-2.jpg",
+  "/demo/mg-zs-3.jpg"
+ ],
+ "Chery Tiggo 7": [
+  "/demo/chery-tiggo-7-1.jpg",
+  "/demo/chery-tiggo-7-2.jpg",
+  "/demo/chery-tiggo-7-3.jpg"
+ ],
+ "Mitsubishi L200": [
+  "/demo/mitsubishi-l200-1.jpg",
+  "/demo/mitsubishi-l200-2.jpg",
+  "/demo/mitsubishi-l200-3.jpg"
+ ],
+ "Honda CR-V": [
+  "/demo/honda-cr-v-1.jpg",
+  "/demo/honda-cr-v-2.jpg",
+  "/demo/honda-cr-v-3.jpg"
+ ],
+ "Jeep Compass": [
+  "/demo/jeep-compass-1.jpg",
+  "/demo/jeep-compass-2.jpg",
+  "/demo/jeep-compass-3.jpg"
+ ]
+}
