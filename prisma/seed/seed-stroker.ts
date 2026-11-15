@@ -231,26 +231,114 @@ export async function purgeNonInstagramVehicles() {
   const ids = nonIgVehicles.map((v) => v.id);
   console.log(`Eliminando ${ids.length} vehículos no-IG y sus dependencias...`);
 
-  // Eliminar dependencias en orden inverso de claves foráneas
-  await db.consignment.deleteMany({ where: { vehicleId: { in: ids } } });
-  await db.sale.deleteMany({ where: { vehicleId: { in: ids } } });
-  await db.reservation.deleteMany({ where: { vehicleId: { in: ids } } });
+  // 1. Consignaciones
+  const consignments = await db.consignment.findMany({
+    where: { vehicleId: { in: ids } },
+    select: { id: true },
+  });
+  const consignmentIds = consignments.map((c) => c.id);
+  if (consignmentIds.length > 0) {
+    const payouts = await db.ownerPayout.findMany({
+      where: { consignmentId: { in: consignmentIds } },
+      select: { id: true },
+    });
+    const payoutIds = payouts.map((p) => p.id);
+    if (payoutIds.length > 0) {
+      await db.movement.updateMany({
+        where: { payoutId: { in: payoutIds } },
+        data: { payoutId: null },
+      });
+      await db.ownerPayout.deleteMany({
+        where: { id: { in: payoutIds } },
+      });
+    }
+    await db.document.updateMany({
+      where: { consignmentId: { in: consignmentIds } },
+      data: { consignmentId: null },
+    });
+    await db.consignment.deleteMany({ where: { id: { in: consignmentIds } } });
+  }
+
+  // 2. Ventas
+  const sales = await db.sale.findMany({
+    where: { vehicleId: { in: ids } },
+    select: { id: true },
+  });
+  const saleIds = sales.map((s) => s.id);
+  if (saleIds.length > 0) {
+    await db.salesBookEntry.deleteMany({ where: { saleId: { in: saleIds } } });
+    await db.saleCommission.deleteMany({ where: { saleId: { in: saleIds } } });
+
+    const salePayments = await db.payment.findMany({
+      where: { saleId: { in: saleIds } },
+      select: { id: true },
+    });
+    const salePaymentIds = salePayments.map((p) => p.id);
+    if (salePaymentIds.length > 0) {
+      await db.movement.deleteMany({ where: { paymentId: { in: salePaymentIds } } });
+      await db.payment.deleteMany({ where: { id: { in: salePaymentIds } } });
+    }
+
+    await db.movement.updateMany({
+      where: { saleId: { in: saleIds } },
+      data: { saleId: null },
+    });
+    await db.document.updateMany({
+      where: { saleId: { in: saleIds } },
+      data: { saleId: null },
+    });
+    await db.reservation.updateMany({
+      where: { saleId: { in: saleIds } },
+      data: { saleId: null },
+    });
+    await db.sale.deleteMany({ where: { id: { in: saleIds } } });
+  }
+
+  // 3. Reservas
+  const reservations = await db.reservation.findMany({
+    where: { vehicleId: { in: ids } },
+    select: { id: true },
+  });
+  const reservationIds = reservations.map((r) => r.id);
+  if (reservationIds.length > 0) {
+    const resPayments = await db.payment.findMany({
+      where: { reservationId: { in: reservationIds } },
+      select: { id: true },
+    });
+    const resPaymentIds = resPayments.map((p) => p.id);
+    if (resPaymentIds.length > 0) {
+      await db.movement.deleteMany({ where: { paymentId: { in: resPaymentIds } } });
+      await db.payment.deleteMany({ where: { id: { in: resPaymentIds } } });
+    }
+    await db.document.updateMany({
+      where: { reservationId: { in: reservationIds } },
+      data: { reservationId: null },
+    });
+    await db.reservation.deleteMany({ where: { id: { in: reservationIds } } });
+  }
+
+  // 4. Desvincular relaciones de Vehicle
+  await db.opportunity.updateMany({
+    where: { vehicleId: { in: ids } },
+    data: { vehicleId: null },
+  });
+  await db.appointment.updateMany({
+    where: { vehicleId: { in: ids } },
+    data: { vehicleId: null },
+  });
   await db.movement.deleteMany({ where: { vehicleId: { in: ids } } });
-  await db.appointment.deleteMany({ where: { vehicleId: { in: ids } } });
-  await db.opportunity.deleteMany({ where: { vehicleId: { in: ids } } });
   await db.document.deleteMany({ where: { vehicleId: { in: ids } } });
   await db.webEvent.deleteMany({ where: { vehicleId: { in: ids } } });
   await db.socialPost.deleteMany({ where: { vehicleId: { in: ids } } });
   await db.appraisal.deleteMany({ where: { vehicleId: { in: ids } } });
   await db.vehiclePhoto.deleteMany({ where: { vehicleId: { in: ids } } });
 
-  // Desvincular de InstagramImport si hubiese
   await db.instagramImport.updateMany({
     where: { vehicleId: { in: ids } },
     data: { vehicleId: null },
   });
 
-  // Eliminar los vehículos no-IG
+  // 5. Eliminar finalmente los vehículos no-IG
   const deleted = await db.vehicle.deleteMany({
     where: { id: { in: ids } },
   });
