@@ -179,7 +179,14 @@ export async function seedOfficialStrokerInventory() {
     console.log(`[OK] ${v.stockCode} - ${v.brand} ${v.model} (${v.status})`);
   }
 
-  // 3. Asegurar configuración de marca oficial en Sistema > Mi Web
+  // 3. Eliminar todos los vehículos que no sean de Instagram Oficial
+  try {
+    await purgeNonInstagramVehicles();
+  } catch (err) {
+    console.error("Error purging non-IG vehicles:", err);
+  }
+
+  // 4. Asegurar configuración de marca oficial en Sistema > Mi Web
   try {
     const webSetting = await db.setting.findUnique({ where: { key: "web" } });
     if (webSetting?.value) {
@@ -205,6 +212,51 @@ export async function seedOfficialStrokerInventory() {
 
   console.log(`=== SINCRONIZACIÓN COMPLETADA: ${count} VEHÍCULOS OFICIALES ===`);
   return count;
+}
+
+export async function purgeNonInstagramVehicles() {
+  console.log("=== ELIMINANDO VEHÍCULOS QUE NO SON DE INSTAGRAM OFICIAL ===");
+  const nonIgVehicles = await db.vehicle.findMany({
+    where: {
+      source: { not: "INSTAGRAM_OFFICIAL" },
+    },
+    select: { id: true, stockCode: true, brand: true, model: true },
+  });
+
+  if (nonIgVehicles.length === 0) {
+    console.log("No hay vehículos no-IG para eliminar.");
+    return 0;
+  }
+
+  const ids = nonIgVehicles.map((v) => v.id);
+  console.log(`Eliminando ${ids.length} vehículos no-IG y sus dependencias...`);
+
+  // Eliminar dependencias en orden inverso de claves foráneas
+  await db.consignment.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.sale.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.reservation.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.movement.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.appointment.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.opportunity.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.document.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.webEvent.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.socialPost.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.appraisal.deleteMany({ where: { vehicleId: { in: ids } } });
+  await db.vehiclePhoto.deleteMany({ where: { vehicleId: { in: ids } } });
+
+  // Desvincular de InstagramImport si hubiese
+  await db.instagramImport.updateMany({
+    where: { vehicleId: { in: ids } },
+    data: { vehicleId: null },
+  });
+
+  // Eliminar los vehículos no-IG
+  const deleted = await db.vehicle.deleteMany({
+    where: { id: { in: ids } },
+  });
+
+  console.log(`=== ELIMINADOS ${deleted.count} VEHÍCULOS NO-IG CON ÉXITO ===`);
+  return deleted.count;
 }
 
 if (process.argv[1]?.includes("seed-stroker")) {

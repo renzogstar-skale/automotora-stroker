@@ -17,7 +17,7 @@ import { sp, qs } from "@/lib/period";
 import { VEHICLE_STATUS, FUELS, TRANSMISSIONS } from "@/lib/labels";
 import { clp, daysBetween, km, fmtPlate } from "@/lib/format";
 import { expireReservations, vehicleWhere } from "@/server/inventory";
-import { seedOfficialStrokerInventory } from "@/server/seed-stroker";
+import { seedOfficialStrokerInventory, purgeNonInstagramVehicles } from "@/server/seed-stroker";
 import { Badge, Card, Empty, PageHeader, Pagination, StatusBadge, Table, cx } from "@/components/ui";
 
 type SP = Promise<Record<string, string | string[] | undefined>>;
@@ -34,6 +34,16 @@ export default async function Inventory({ searchParams }: { searchParams: SP }) 
       await seedOfficialStrokerInventory();
     } catch (e) {
       console.error("Auto-sync error:", e);
+    }
+  }
+
+  // Asegura que solo permanezcan los vehículos oficiales de Instagram
+  const nonOfficialCount = await db.vehicle.count({ where: { source: { not: "INSTAGRAM_OFFICIAL" } } });
+  if (nonOfficialCount > 0) {
+    try {
+      await purgeNonInstagramVehicles();
+    } catch (e) {
+      console.error("Purge error:", e);
     }
   }
   const s = await searchParams;

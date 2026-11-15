@@ -5,7 +5,7 @@ import { BUSINESS, DEMO_INVENTORY, waUrl } from "@/lib/business";
 import { DemoNavbar } from "@/components/hero/demo-navbar";
 import { HeroAndCatalog } from "@/components/hero/hero-and-catalog";
 import type { DemoVehicle, DemoBranch } from "@/types/hero-demo";
-import { seedOfficialStrokerInventory } from "@/server/seed-stroker";
+import { seedOfficialStrokerInventory, purgeNonInstagramVehicles } from "@/server/seed-stroker";
 import { loadSite, trackView } from "./(web)/site";
 
 export const dynamic = "force-dynamic";
@@ -26,6 +26,15 @@ export default async function HomePage({ searchParams }: { searchParams: Promise
         await seedOfficialStrokerInventory();
       } catch (e) {
         console.error("Auto-sync error:", e);
+      }
+    }
+
+    const nonOfficialCount = await db.vehicle.count({ where: { source: { not: "INSTAGRAM_OFFICIAL" } } });
+    if (nonOfficialCount > 0) {
+      try {
+        await purgeNonInstagramVehicles();
+      } catch (e) {
+        console.error("Purge error:", e);
       }
     }
 
