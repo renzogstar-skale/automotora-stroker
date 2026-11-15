@@ -161,9 +161,9 @@ export async function seedOfficialStrokerInventory() {
       vehicleId = created.id;
     }
 
-    // Gestionar fotos
+    // Gestionar fotos (máximo y exactamente 2 fotos oficiales por vehículo)
     await db.vehiclePhoto.deleteMany({ where: { vehicleId } });
-    const photos = v.localPhotos || [];
+    const photos = (v.localPhotos || []).slice(0, 2);
     for (let i = 0; i < photos.length; i++) {
       await db.vehiclePhoto.create({
         data: {
@@ -338,7 +338,11 @@ export async function purgeNonInstagramVehicles() {
     data: { vehicleId: null },
   });
 
-  // 5. Eliminar finalmente los vehículos no-IG
+  // 5. Eliminar finalmente los vehículos no-IG y fotos excedentes (> 2 fotos)
+  await db.vehiclePhoto.deleteMany({
+    where: { order: { gte: 2 } },
+  });
+
   const deleted = await db.vehicle.deleteMany({
     where: { id: { in: ids } },
   });

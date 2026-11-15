@@ -8,7 +8,8 @@ export function Gallery({ photos, alt }: { photos: string[]; alt: string }) {
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const touchStartX = useRef<number | null>(null);
   const touchStartY = useRef<number | null>(null);
-  const list = photos.length ? photos : ["/demo/placeholder.svg"];
+  // Catálogo oficial: exactamente 2 fotos por vehículo
+  const list = (photos.length ? photos : ["/demo/placeholder.svg"]).slice(0, 2);
 
   // Navegación por teclado
   useEffect(() => {

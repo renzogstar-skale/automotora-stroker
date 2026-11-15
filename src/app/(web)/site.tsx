@@ -133,14 +133,37 @@ export function Availability({ status }: { status: string }) {
 
 export function VehicleCard({ v, href }: { v: PublicVehicle; href: (p: string) => string }) {
   const isVendido = v.status === "VENDIDO";
+  const photo1 = v.photos[0]?.url || "/demo/placeholder.svg";
+  const photo2 = v.photos[1]?.url;
   return (
     <Link href={href(`/autos/${v.slug}`)} className={`card group overflow-hidden transition-all duration-200 hover:shadow-lg ${isVendido ? "opacity-90 grayscale-[25%]" : ""}`}>
-      <div className="relative">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-surface-2">
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={cover(v)} alt={`${v.brand} ${v.model} ${v.year}`} className="aspect-[4/3] w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+        <img
+          src={photo1}
+          alt={`${v.brand} ${v.model} ${v.year}`}
+          className={`absolute inset-0 size-full object-cover transition-all duration-300 ${photo2 ? "group-hover:opacity-0" : "group-hover:scale-105"}`}
+          loading="lazy"
+        />
+        {photo2 && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={photo2}
+            alt={`${v.brand} ${v.model} ${v.year} - foto 2`}
+            className="absolute inset-0 size-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-hover:scale-105"
+            loading="lazy"
+          />
+        )}
         <div className="absolute left-2.5 top-2.5 z-10"><Availability status={v.status} /></div>
+        {photo2 && (
+          <div className="absolute right-2.5 bottom-2.5 z-10 pointer-events-none">
+            <span className="rounded-md bg-black/60 backdrop-blur-sm text-white/90 px-2 py-0.5 text-[11px] font-medium tracking-tight shadow">
+              2 fotos
+            </span>
+          </div>
+        )}
         {isVendido && (
-          <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 flex items-center justify-center z-10">
             <span className="bg-red-600/90 text-white text-xs font-black px-3 py-1 rounded-md tracking-wider uppercase shadow-md">
               🔴 Unidad Vendida
             </span>

@@ -272,7 +272,7 @@ export default async function VehiclePage({
           <div className="lg:col-span-3 space-y-8">
             {/* Galería de Fotografías Reales */}
             <div className="relative">
-              <Gallery photos={v.photos.map((p) => p.url)} alt={name} />
+              <Gallery photos={v.photos.slice(0, 2).map((p) => p.url)} alt={name} />
               {isVendido && (
                 <div className="absolute top-4 right-4 z-20">
                   <span className="rounded-xl bg-red-600 text-white font-black px-4 py-2 text-sm shadow-xl tracking-wider uppercase">
