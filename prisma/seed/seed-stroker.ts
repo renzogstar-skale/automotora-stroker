@@ -86,6 +86,15 @@ export async function seedOfficialStrokerInventory() {
           commercialStatus: post.caption && /vendid/i.test(post.caption) ? "VENDIDO" : "DISPONIBLE",
         },
       });
+    } else {
+      // Completa solo marca/modelo/versión/año/precio verificados si el registro existente no los tiene
+      const data = (existing.extractedData as any) || {};
+      if (post.brand && post.model && (!data.brand || !data.model)) {
+        await db.instagramImport.update({
+          where: { id: existing.id },
+          data: { extractedData: { ...data, brand: post.brand, model: post.model, version: post.version ?? data.version, year: post.year ?? data.year, priceCLP: data.priceCLP || post.priceCLP } },
+        });
+      }
     }
   }
 
