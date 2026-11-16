@@ -27,6 +27,29 @@ interface HeroSectionProps {
   heroImage?: string;
 }
 
+function formatHeroTitle(title?: string) {
+  const text = (title || "Special Cars for Special People").trim();
+  if (
+    text.toLowerCase() === "special cars for special people" ||
+    text.toLowerCase() === "special cars\nfor special people"
+  ) {
+    return (
+      <>
+        <span className="block">Special Cars</span>
+        <span className="block">for Special People</span>
+      </>
+    );
+  }
+  if (text.includes("\n")) {
+    return text.split("\n").map((line, idx) => (
+      <span key={idx} className="block">
+        {line}
+      </span>
+    ));
+  }
+  return text;
+}
+
 export function HeroSection({
   title,
   subtitle,
@@ -160,9 +183,9 @@ export function HeroSection({
         {/* Layout en dos columnas: Titular/Buscador a la izquierda, Ficha destacada a la derecha en escritorio */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           <div className="lg:col-span-8">
-            {/* Título grande, elegante y contundente */}
-            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-[1.1] text-white">
-              {title || "Special Cars for Special People"}
+            {/* Título grande, elegante y contundente exactamente como la identidad de marca */}
+            <h1 className="text-4xl sm:text-5xl lg:text-[64px] font-black tracking-[-0.035em] leading-[1.02] text-white">
+              {formatHeroTitle(title)}
             </h1>
 
             {/* Traducción del lema */}

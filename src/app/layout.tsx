@@ -1,7 +1,13 @@
 import type { Metadata, Viewport } from "next";
 import { cookies } from "next/headers";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { getSetting } from "@/server/settings";
+
+const inter = Inter({
+  subsets: ["latin"],
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: { default: "Automotora Stroker · Special Cars for Special People", template: "%s · Stroker" },
@@ -16,7 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html lang="es-CL" className={theme === "dark" ? "dark" : undefined} suppressHydrationWarning>
       <head><style>{`:root{--accent:${safe}}`}</style></head>
-      <body>{children}</body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
