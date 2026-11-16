@@ -9,10 +9,19 @@ async function run() {
   console.log("=== INICIANDO VALIDACIÓN MOBILE COMPLETA CON PLAYWRIGHT ===");
 
   const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-  const browser = await chromium.launch({
-    executablePath: chromePath,
-    headless: true,
-  });
+  const baseUrl = process.env.TEST_APP_URL || "http://localhost:3100";
+  console.log(`URL base de pruebas: ${baseUrl}`);
+
+  let browser;
+  try {
+    browser = await chromium.launch({ channel: "msedge", headless: true });
+  } catch {
+    browser = await chromium.launch({
+      executablePath: chromePath,
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
 
   // Obtener un vehículo publicado para probar la ficha de detalle
   const sampleVehicle = await db.vehicle.findFirst({
@@ -57,8 +66,8 @@ async function run() {
     // -------------------------------------------------------------
     // PRUEBA 1: PORTADA PRINCIPAL (VITRINA PÚBLICA)
     // -------------------------------------------------------------
-    console.log(`\n-> 1. Cargando Portada Principal (http://localhost:3000/)...`);
-    await page.goto("http://localhost:3000/", { waitUntil: "networkidle" });
+    console.log(`\n-> 1. Cargando Portada Principal (${baseUrl}/)...`);
+    await page.goto(`${baseUrl}/`, { waitUntil: "networkidle" });
 
     // 1.1 Verificar desplazamiento horizontal (0px de desbordamiento)
     const homeOverflow = await page.evaluate(() => {
@@ -192,8 +201,8 @@ async function run() {
     // -------------------------------------------------------------
     // PRUEBA 2: FICHA DE DETALLE DEL VEHÍCULO (/autos/[slug])
     // -------------------------------------------------------------
-    console.log(`\n-> 5. Cargando Detalle de Vehículo (http://localhost:3000/autos/${sampleVehicle.slug})...`);
-    await page.goto(`http://localhost:3000/autos/${sampleVehicle.slug}`, { waitUntil: "networkidle" });
+    console.log(`\n-> 5. Cargando Detalle de Vehículo (${baseUrl}/autos/${sampleVehicle.slug})...`);
+    await page.goto(`${baseUrl}/autos/${sampleVehicle.slug}`, { waitUntil: "networkidle" });
 
     // 2.1 Verificar desbordamiento horizontal en detalle
     const detailOverflow = await page.evaluate(() => {

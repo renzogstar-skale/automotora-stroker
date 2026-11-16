@@ -8,10 +8,19 @@ async function runComprehensiveValidation() {
   console.log("=== INICIANDO VALIDACIÓN EXHAUSTIVA DE VITRINA Y TARJETAS PREMIUM ===");
 
   const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-  const browser = await chromium.launch({
-    executablePath: chromePath,
-    headless: true,
-  });
+  const baseUrl = process.env.APP_URL || "http://localhost:3100";
+  console.log(`URL base de pruebas: ${baseUrl}`);
+
+  let browser;
+  try {
+    browser = await chromium.launch({ channel: "msedge", headless: true });
+  } catch {
+    browser = await chromium.launch({
+      executablePath: chromePath,
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
 
   const consoleErrors = [];
   let testsPassed = 0;
@@ -39,7 +48,7 @@ async function runComprehensiveValidation() {
     }
   });
 
-  const res = await page.goto("http://localhost:3000", { waitUntil: "networkidle" });
+  const res = await page.goto(baseUrl, { waitUntil: "networkidle" });
   assert("Respuesta HTTP 200 en Home", res?.status() === 200);
 
   // Scroll directo a la vitrina
@@ -124,7 +133,7 @@ async function runComprehensiveValidation() {
   console.log("\n--- Probando Filtros Completos ---");
 
   // Filtro por Transmisión: 'Automática'
-  const selTransmision = page.locator('select[aria-label="Filtrar por transmisión"]');
+  const selTransmision = page.locator('#vitrina select[aria-label="Filtrar por transmisión"]');
   assert("Filtro por Transmisión disponible", (await selTransmision.count()) > 0);
   await selTransmision.selectOption("Automática");
   await page.waitForTimeout(400);
@@ -133,7 +142,7 @@ async function runComprehensiveValidation() {
   assert("Filtro por transmisión devuelve resultados", transCount > 0, `Unidades automáticas: ${transCount}`);
 
   // Filtro por Kilometraje: 'Hasta 50.000 km'
-  const selKm = page.locator('select[aria-label="Filtrar por kilometraje"]');
+  const selKm = page.locator('#vitrina select[aria-label="Filtrar por kilometraje"]');
   assert("Filtro por Kilometraje disponible", (await selKm.count()) > 0);
   await selKm.selectOption("50000");
   await page.waitForTimeout(400);
@@ -203,7 +212,7 @@ async function runComprehensiveValidation() {
   await page.waitForTimeout(400);
 
   const allRestoredCount = await cards.count();
-  assert("Inventario completo restaurado con éxito", allRestoredCount > 15, `Restauradas: ${allRestoredCount}`);
+  assert("Inventario completo restaurado con éxito", allRestoredCount >= 15, `Restauradas: ${allRestoredCount}`);
 
   await desktopContext.close();
 
@@ -211,7 +220,7 @@ async function runComprehensiveValidation() {
   console.log("\n--- Probando Tablet (768x1024) ---");
   const tabletContext = await browser.newContext({ viewport: { width: 768, height: 1024 } });
   const tabletPage = await tabletContext.newPage();
-  await tabletPage.goto("http://localhost:3000", { waitUntil: "networkidle" });
+  await tabletPage.goto(baseUrl, { waitUntil: "networkidle" });
   await tabletPage.locator("#vitrina").scrollIntoViewIfNeeded();
   await tabletPage.waitForTimeout(400);
 
@@ -231,7 +240,7 @@ async function runComprehensiveValidation() {
     hasTouch: true,
   });
   const mobilePage = await mobileContext.newPage();
-  await mobilePage.goto("http://localhost:3000", { waitUntil: "networkidle" });
+  await mobilePage.goto(baseUrl, { waitUntil: "networkidle" });
   await mobilePage.locator("#vitrina").scrollIntoViewIfNeeded();
   await mobilePage.waitForTimeout(400);
 

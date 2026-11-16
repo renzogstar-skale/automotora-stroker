@@ -4,8 +4,8 @@ import { spawn } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
-const PORT = 3200;
-const BASE_URL = `http://localhost:${PORT}`;
+const PORT = process.env.TEST_PORT ? parseInt(process.env.TEST_PORT, 10) : 3100;
+const BASE_URL = process.env.TEST_APP_URL || `http://localhost:${PORT}`;
 const SCREENSHOTS_DIR = path.resolve("storage/screenshots");
 
 if (!fs.existsSync(SCREENSHOTS_DIR)) {
@@ -51,11 +51,16 @@ async function main() {
   console.log(`Servidor activo y respondiendo en ${BASE_URL}`);
 
   const chromePath = "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe";
-  const browser = await chromium.launch({
-    executablePath: chromePath,
-    headless: true,
-    args: ["--no-sandbox", "--disable-setuid-sandbox"],
-  });
+  let browser;
+  try {
+    browser = await chromium.launch({ channel: "msedge", headless: true });
+  } catch {
+    browser = await chromium.launch({
+      executablePath: chromePath,
+      headless: true,
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
+  }
 
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },

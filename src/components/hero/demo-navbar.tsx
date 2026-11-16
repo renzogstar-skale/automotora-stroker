@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowRight, Menu, X, Sparkles, Phone, MapPin, Gauge } from "lucide-react";
-import { BUSINESS, DEMO_INVENTORY, waUrl } from "@/lib/business";
+import { ArrowRight, Menu, X, Phone, MapPin, Gauge } from "lucide-react";
+import { BUSINESS, waUrl } from "@/lib/business";
 
 interface DemoNavbarProps {
   actor: { name: string; email: string } | null;
@@ -60,6 +60,86 @@ export function DemoNavbar({ actor }: DemoNavbarProps) {
             : "bg-zinc-950/75 backdrop-blur-md border-b border-white/10"
         }`}
       >
+        {/* Desplegable móvil optimizado para touch y safe-areas (renderizado antes para precedencia móvil) */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-b border-white/10 bg-zinc-950/95 backdrop-blur-xl px-4 py-5 animate-in slide-in-from-top-2 duration-200">
+            <div className="flex flex-col gap-2 text-base font-semibold text-zinc-200">
+              <Link
+                href="/"
+                onClick={closeMenu}
+                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+              >
+                Inicio
+              </Link>
+              <a
+                href="#vitrina"
+                onClick={closeMenu}
+                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+              >
+                Catálogo
+              </a>
+              <a
+                href="#nosotros"
+                onClick={closeMenu}
+                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+              >
+                Sobre nosotros
+              </a>
+              <a
+                href="#servicios"
+                onClick={closeMenu}
+                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+              >
+                Servicios
+              </a>
+              <a
+                href="#contacto"
+                onClick={closeMenu}
+                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
+              >
+                Contacto
+              </a>
+              <div className="my-2 border-t border-white/10 pt-2 grid grid-cols-2 gap-2 text-xs">
+                <a
+                  href={BUSINESS.tel}
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 py-2.5 font-medium text-white hover:bg-white/10 transition-colors"
+                >
+                  <Phone className="size-3.5 text-red-400" />
+                  <span>Llamar</span>
+                </a>
+                <a
+                  href={waUrl("Hola, quiero más información.")}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-600/20 py-2.5 font-semibold text-emerald-300 hover:bg-emerald-600/30 transition-colors"
+                >
+                  <span>WhatsApp</span>
+                </a>
+              </div>
+              <div className="pt-3 mt-1 border-t border-white/10">
+                {actor ? (
+                  <Link
+                    href="/panel"
+                    onClick={closeMenu}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm min-h-[44px] h-11 w-full shadow-md transition-colors"
+                  >
+                    <Gauge className="size-4" />
+                    Ir al Panel ({actor.name.split(" ")[0]})
+                  </Link>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={closeMenu}
+                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-semibold text-sm min-h-[44px] h-11 w-full shadow-md transition-colors"
+                  >
+                    Acceso al Panel Stroker <ArrowRight className="size-4" />
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="mx-auto flex h-16 sm:h-20 max-w-[1280px] items-center justify-between px-4 sm:px-6 lg:px-8">
           {/* Logo Automotora Stroker */}
           <Link
@@ -152,86 +232,6 @@ export function DemoNavbar({ actor }: DemoNavbarProps) {
             </button>
           </div>
         </div>
-
-        {/* Desplegable móvil optimizado para touch y safe-areas */}
-        {mobileMenuOpen && (
-          <div className="md:hidden border-b border-white/10 bg-zinc-950/95 backdrop-blur-xl px-4 py-5 animate-in slide-in-from-top-2 duration-200">
-            <div className="flex flex-col gap-2 text-base font-semibold text-zinc-200">
-              <Link
-                href="/"
-                onClick={closeMenu}
-                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
-              >
-                Inicio
-              </Link>
-              <a
-                href="#vitrina"
-                onClick={closeMenu}
-                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
-              >
-                Catálogo
-              </a>
-              <a
-                href="#nosotros"
-                onClick={closeMenu}
-                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
-              >
-                Sobre nosotros
-              </a>
-              <a
-                href="#servicios"
-                onClick={closeMenu}
-                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
-              >
-                Servicios
-              </a>
-              <a
-                href="#contacto"
-                onClick={closeMenu}
-                className="px-3.5 min-h-[44px] flex items-center rounded-xl hover:bg-white/10 hover:text-white transition-colors"
-              >
-                Contacto
-              </a>
-              <div className="my-2 border-t border-white/10 pt-2 grid grid-cols-2 gap-2 text-xs">
-                <a
-                  href={BUSINESS.tel}
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-white/15 bg-white/5 py-2.5 font-medium text-white hover:bg-white/10 transition-colors"
-                >
-                  <Phone className="size-3.5 text-red-400" />
-                  <span>Llamar</span>
-                </a>
-                <a
-                  href={waUrl("Hola, quiero más información.")}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/40 bg-emerald-600/20 py-2.5 font-semibold text-emerald-300 hover:bg-emerald-600/30 transition-colors"
-                >
-                  <span>WhatsApp</span>
-                </a>
-              </div>
-              <div className="pt-3 mt-1 border-t border-white/10">
-                {actor ? (
-                  <Link
-                    href="/panel"
-                    onClick={closeMenu}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-red-600 hover:bg-red-500 text-white font-semibold text-sm min-h-[44px] h-11 w-full shadow-md transition-colors"
-                  >
-                    <Gauge className="size-4" />
-                    Ir al Panel ({actor.name.split(" ")[0]})
-                  </Link>
-                ) : (
-                  <Link
-                    href="/login"
-                    onClick={closeMenu}
-                    className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-semibold text-sm min-h-[44px] h-11 w-full shadow-md transition-colors"
-                  >
-                    Acceso al Panel Stroker <ArrowRight className="size-4" />
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </header>
     </>
   );

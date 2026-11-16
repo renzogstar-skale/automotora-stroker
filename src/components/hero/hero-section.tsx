@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Car,
   Search,
@@ -36,7 +36,7 @@ function formatHeroTitle(title?: string) {
     return (
       <>
         <span className="block">Special Cars</span>
-        <span className="block">for Special People</span>
+        <span className="block text-white">for Special People</span>
       </>
     );
   }
@@ -63,11 +63,49 @@ export function HeroSection({
   featuredVehicle,
 }: HeroSectionProps) {
   // Extraer listas únicas de marcas y años del inventario real
-  const availableBrands = Array.from(new Set(vehicles.map((v) => v.brand))).sort();
-  const availableYears = Array.from(new Set(vehicles.map((v) => v.year))).sort((a, b) => b - a);
+  const availableBrands = useMemo(
+    () => Array.from(new Set(vehicles.map((v) => v.brand))).sort(),
+    [vehicles]
+  );
+  const availableYears = useMemo(
+    () => Array.from(new Set(vehicles.map((v) => v.year))).sort((a, b) => b - a),
+    [vehicles]
+  );
 
-  // Contadores del Hero con datos reales confirmados (Fase 9)
-  const disponiblesCount = vehicles.filter((v) => v.status === "DISPONIBLE" && v.verificationStatus !== "POR_CONFIRMAR").length;
+  // Fotografías reales del inventario para la rotación automática de fondo
+  const backgroundPhotos = useMemo(() => {
+    const list: string[] = [];
+    if (heroImage) list.push(heroImage);
+    else list.push("/brand/stroker-portada.jpg");
+
+    // Agregar fotos reales de vehículos disponibles
+    for (const v of vehicles) {
+      if (v.photos && v.photos.length > 0) {
+        const photoUrl = v.photos[0].url;
+        if (!list.includes(photoUrl)) {
+          list.push(photoUrl);
+        }
+      }
+      if (list.length >= 6) break;
+    }
+    return list;
+  }, [vehicles, heroImage]);
+
+  // Rotación automática de las fotografías reales de fondo cada 7.5 segundos
+  const [bgIndex, setBgIndex] = useState(0);
+
+  useEffect(() => {
+    if (backgroundPhotos.length <= 1) return;
+    const interval = setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % backgroundPhotos.length);
+    }, 7500);
+    return () => clearInterval(interval);
+  }, [backgroundPhotos.length]);
+
+  // Contadores del Hero con datos reales confirmados
+  const disponiblesCount = vehicles.filter(
+    (v) => v.status === "DISPONIBLE" && v.verificationStatus !== "POR_CONFIRMAR"
+  ).length;
   const vendidosCount = vehicles.filter((v) => v.status === "VENDIDO").length;
   const marcasDisponiblesCount = new Set(
     vehicles
@@ -131,25 +169,31 @@ export function HeroSection({
 
   return (
     <section className="relative overflow-hidden bg-zinc-950 text-white min-h-[660px] lg:min-h-[720px] flex flex-col justify-between">
-      {/* Fondo cinematográfico con fotografía oficial de Automotora Stroker */}
-      <div className="absolute inset-0 -z-10 overflow-hidden">
-        {/* Imagen de fondo del héroe */}
-        <img
-          src={heroImage || "/brand/stroker-portada.jpg"}
-          alt="Automotora Stroker Portada"
-          fetchPriority="high"
-          decoding="async"
-          className="size-full object-cover object-center lg:object-[center_35%] scale-105 opacity-35 brightness-75 contrast-125"
-        />
+      {/* Fondo cinematográfico multicapa con rotación suave de fotografías reales del inventario */}
+      <div className="absolute inset-0 -z-10 overflow-hidden" aria-hidden="true">
+        {backgroundPhotos.map((photoUrl, idx) => (
+          <div
+            key={photoUrl}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              idx === bgIndex ? "opacity-35" : "opacity-0 pointer-events-none"
+            }`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={photoUrl}
+              alt="Automotora Stroker Fondo"
+              fetchPriority={idx === 0 ? "high" : "low"}
+              decoding="async"
+              className="size-full object-cover object-center lg:object-[center_35%] scale-105 motion-safe:animate-subtle-zoom brightness-75 contrast-125"
+            />
+          </div>
+        ))}
 
         {/* Gradientes cinematográficos multicapa para máxima legibilidad */}
-        {/* Gradiente horizontal: oscuro a la izquierda para el texto, transparente a la derecha */}
         <div className="absolute inset-0 bg-gradient-to-r from-zinc-950 via-zinc-950/85 to-zinc-950/40" />
-
-        {/* Gradiente vertical: viñeta superior e inferior profunda */}
         <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-transparent to-zinc-950/70" />
 
-        {/* Acento de iluminación rojo sutil institucional */}
+        {/* Acento de iluminación rojo sutil institucional Stroker */}
         <div className="absolute -top-32 left-1/4 size-96 rounded-full bg-red-600/15 blur-[120px] pointer-events-none" />
         <div className="absolute -bottom-32 right-10 size-96 rounded-full bg-red-800/15 blur-[120px] pointer-events-none" />
       </div>
@@ -232,7 +276,7 @@ export function HeroSection({
           </div>
         </div>
 
-        {/* 3. BUSCADOR INTELIGENTE */}
+        {/* 3. BUSCADOR INTELIGENTE RESPONSIVO */}
         <div className="mt-10 sm:mt-12">
           <form
             onSubmit={handleFormSubmit}
@@ -328,13 +372,13 @@ export function HeroSection({
                 </div>
               </div>
 
-              {/* Transmisión (las sucursales de la semilla no se exponen: la sede confirmada es Antofagasta) */}
+              {/* Transmisión */}
               <div className="relative">
                 <select
                   value={filters.transmision}
                   onChange={(e) => handleFieldChange("transmision", e.target.value)}
                   className="w-full h-11 min-h-[44px] appearance-none rounded-xl border border-white/15 bg-zinc-950/90 px-3.5 py-2.5 text-xs sm:text-sm text-white focus:border-red-500 focus:outline-none focus:ring-1 focus:ring-red-500 transition-colors cursor-pointer"
-                  aria-label="Filtrar por transmisión"
+                  aria-label="Filtrar por transmisión en buscador"
                 >
                   <option value="">Toda transmisión</option>
                   {[...new Set(vehicles.map((v) => v.transmission))].sort().map((t) => (
