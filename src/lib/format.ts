@@ -5,7 +5,12 @@ const numFmt = new Intl.NumberFormat("es-CL", { maximumFractionDigits: 0 });
 
 export const clp = (n: number | null | undefined) => (n == null ? "—" : clpFmt.format(Math.round(n)));
 export const num = (n: number | null | undefined) => (n == null ? "—" : numFmt.format(n));
-export const km = (n: number | null | undefined) => (n == null ? "—" : `${numFmt.format(n)} km`);
+export const km = (n: number | null | undefined) => {
+  if (n == null) return "—";
+  if (n <= 0) return "0 km";
+  const thousands = n < 1000 ? Math.round(n) : Math.floor(n / 1000);
+  return `${numFmt.format(thousands)}.xxx km`;
+};
 /** Monto abreviado para gráficos ($12,3 M); el valor exacto se muestra en el tooltip. */
 export function clpShort(n: number) {
   const a = Math.abs(n);

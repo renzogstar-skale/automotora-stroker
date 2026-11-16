@@ -114,7 +114,7 @@ export async function seedOfficialStrokerInventory() {
       version: v.version || "",
       year: v.year || 2022,
       plate,
-      km: v.mileage || 0,
+      km: (v.mileage && v.mileage > 0 && v.mileage < 1000 ? v.mileage * 1000 : v.mileage) || 0,
       transmission: v.transmission || "Automática",
       fuel: v.fuel || "Bencina",
       bodyType: v.bodyType || "SUV",
