@@ -29,16 +29,10 @@ export function DemoNavbar({ actor }: DemoNavbarProps) {
       <div className="bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 border-b border-white/5 py-1 px-4 text-center">
         <div className="mx-auto flex max-w-[1280px] items-center justify-between text-[11px] sm:text-xs text-zinc-400">
           <div className="flex items-center gap-2">
-            {DEMO_INVENTORY ? (
-              <>
-                <span className="inline-block size-2 rounded-full bg-amber-400" />
-                <span className="font-semibold text-zinc-300">
-                  Inventario de demostración <span className="hidden sm:inline">· unidades y precios referenciales</span>
-                </span>
-              </>
-            ) : (
-              <span className="font-semibold text-zinc-300">{BUSINESS.hours}</span>
-            )}
+            <span className="inline-block size-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="font-semibold text-zinc-200">
+              Encuentra tu Próximo Vehículo
+            </span>
           </div>
           <div className="hidden md:flex items-center gap-4 text-zinc-400">
             <a
